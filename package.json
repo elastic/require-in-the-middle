@@ -1,6 +1,6 @@
 {
   "name": "require-in-the-middle",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
   "dependencies": {
@@ -38,5 +38,9 @@
   "bugs": {
     "url": "https://github.com/opbeat/require-in-the-middle/issues"
   },
-  "homepage": "https://github.com/opbeat/require-in-the-middle#readme"
+  "homepage": "https://github.com/opbeat/require-in-the-middle#readme",
+  "coordinates": [
+    55.6665824,
+    12.5800815
+  ]
 }
