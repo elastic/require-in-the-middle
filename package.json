@@ -1,0 +1,41 @@
+{
+  "name": "require-in-the-middle",
+  "version": "0.0.0",
+  "description": "Module to hook into the Node.js require function",
+  "main": "index.js",
+  "dependencies": {
+    "module-details-from-path": "^1.0.2",
+    "resolve": "^1.1.7"
+  },
+  "devDependencies": {
+    "patterns": "^1.0.2",
+    "roundround": "^0.2.0",
+    "standard": "^6.0.4",
+    "tape": "^4.4.0"
+  },
+  "scripts": {
+    "test": "standard && tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opbeat/require-in-the-middle.git"
+  },
+  "keywords": [
+    "require",
+    "hook",
+    "shim",
+    "shimmer",
+    "shimming",
+    "patch",
+    "monkey",
+    "monkeypatch",
+    "module",
+    "load"
+  ],
+  "author": "Thomas Watson Steen <w@tson.dk> (https://twitter.com/wa7son)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/opbeat/require-in-the-middle/issues"
+  },
+  "homepage": "https://github.com/opbeat/require-in-the-middle#readme"
+}
