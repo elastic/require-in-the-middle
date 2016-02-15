@@ -16,10 +16,10 @@ module.exports = function hook (modules, onrequire) {
     var exports = orig.apply(Module, arguments)
 
     var filename = Module._resolveFilename(request, parent)
-    var native = filename.indexOf(path.sep) === -1
+    var core = filename.indexOf(path.sep) === -1
     var name, basedir
 
-    if (native) {
+    if (core) {
       name = filename
     } else {
       var stat = parse(filename)
