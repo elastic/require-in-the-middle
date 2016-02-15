@@ -31,7 +31,7 @@ module.exports = function hook (modules, onrequire) {
       try {
         var res = resolve.sync(name, { basedir: basedir })
       } catch (e) {
-        return exports
+        return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
       }
       if (res !== filename) return exports // abort if not main module file
     }
