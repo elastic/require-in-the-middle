@@ -34,11 +34,11 @@ module.exports = function hook (modules, onrequire) {
       if (res !== filename) return exports // abort if not main module file
     }
 
-    if (patched[basedir || name]) return exports // abort if module have already been processed
-    patched[basedir || name] = true
-
     // abort if module name isn't on whitelist
     if (modules && modules.indexOf(name) === -1) return exports
+
+    if (patched[basedir || name]) return exports // abort if module have already been processed
+    patched[basedir || name] = true
 
     return onrequire(exports, name, basedir)
   }
