@@ -13,9 +13,9 @@ module.exports = function hook (modules, onrequire) {
   var patched = {}
 
   Module._load = function (request, parent, isMain) {
-    var filename = Module._resolveFilename(request, parent)
     var exports = orig.apply(Module, arguments)
 
+    var filename = Module._resolveFilename(request, parent)
     var native = filename.indexOf(path.sep) === -1
     var name, basedir
 
