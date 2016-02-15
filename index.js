@@ -10,6 +10,12 @@ var orig = Module._load
 module.exports = function hook (modules, onrequire) {
   if (typeof modules === 'function') return hook(null, modules)
 
+  if (typeof Module._resolveFilename !== 'function') {
+    console.error('Error: Expected Module._resolveFilename to be a function (was: %s) - aborting!', typeof Module._resolveFilename)
+    console.error('Please report this error as an issue related to Node.js %s at %s', process.version, require('./package.json').bugs.url)
+    return
+  }
+
   var patched = {}
 
   Module._load = function (request, parent, isMain) {
