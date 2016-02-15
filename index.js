@@ -27,6 +27,7 @@ module.exports = function hook (modules, onrequire) {
       name = stat.name
       basedir = stat.basedir
 
+      // figure out if this is the main module file, or a file inside the module
       var res = resolve.sync(name, { basedir: basedir })
       if (res !== filename) return exports // abort if not main module file
     }
