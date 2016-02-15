@@ -14,10 +14,7 @@ module.exports = function hook (modules, onrequire) {
 
   Module._load = function (request, parent, isMain) {
     var filename = Module._resolveFilename(request, parent)
-    var cached = Module._cache[filename]
     var exports = orig.apply(Module, arguments)
-
-    if (cached) return exports // abort if module is already cached by core
 
     var native = filename.indexOf(path.sep) === -1
     var name, basedir
