@@ -34,8 +34,8 @@ module.exports = function hook (modules, onrequire) {
     // abort if module name isn't on whitelist
     if (modules && modules.indexOf(name) === -1) return exports
 
-    if (patched[basedir || name]) return exports // abort if module have already been processed
-    patched[basedir || name] = true
+    if (patched[filename]) return exports // abort if module have already been processed
+    patched[filename] = true
 
     return onrequire(exports, name, basedir)
   }
