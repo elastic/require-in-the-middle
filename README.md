@@ -50,7 +50,8 @@ called with three arguments:
 - `exports` - The value of the `module.exports` property that would
   normally be exposed by the required module
 - `name` - The name of the module being required
-- `basedir` - The directory of the where the module is located
+- `basedir` - The directory of the where the module is located (will be
+  `undefined` if core module)
 
 Return the value you want the module to expose (normally the `exports`
 argument).
