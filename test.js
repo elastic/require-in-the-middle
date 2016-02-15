@@ -4,7 +4,7 @@ var test = require('tape')
 var hook = require('./')
 
 test('all modules', function (t) {
-  t.plan(6)
+  t.plan(8)
 
   var n = 1
 
@@ -25,9 +25,14 @@ test('all modules', function (t) {
     return exports
   })
 
+  var http = require('http')
+  var net = require('net')
+
+  t.equal(http.foo, 1)
+  t.equal(net.foo, 2)
   t.equal(require('http').foo, 1)
-  t.equal(require('net').foo, 2)
-  t.equal(require('http').foo, 1)
+  t.deepEqual(hook.cache['http'], http)
+  t.deepEqual(hook.cache['net'], net)
   t.equal(n, 3)
 })
 

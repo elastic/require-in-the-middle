@@ -16,7 +16,7 @@ module.exports = function hook (modules, onrequire) {
     return
   }
 
-  var patched = {}
+  hook.cache = {}
 
   Module._load = function (request, parent, isMain) {
     var exports = orig.apply(Module, arguments)
@@ -45,8 +45,8 @@ module.exports = function hook (modules, onrequire) {
       if (res !== filename) return exports // abort if not main module file
     }
 
-    if (patched[filename]) return exports // abort if module have already been processed
-    patched[filename] = true
+    if (hook.cache[filename]) return exports // abort if module have already been processed
+    hook.cache[filename] = exports
 
     return onrequire(exports, name, basedir)
   }
