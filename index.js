@@ -20,12 +20,15 @@ module.exports = function hook (modules, onrequire) {
     var name, basedir
 
     if (core) {
+      if (modules && modules.indexOf(filename) === -1) return exports // abort if module name isn't on whitelist
       name = filename
     } else {
       var stat = parse(filename)
       if (!stat) return exports // abort if filename could not be parsed
       name = stat.name
       basedir = stat.basedir
+
+      if (modules && modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
 
       // figure out if this is the main module file, or a file inside the module
       try {
@@ -35,9 +38,6 @@ module.exports = function hook (modules, onrequire) {
       }
       if (res !== filename) return exports // abort if not main module file
     }
-
-    // abort if module name isn't on whitelist
-    if (modules && modules.indexOf(name) === -1) return exports
 
     if (patched[filename]) return exports // abort if module have already been processed
     patched[filename] = true
