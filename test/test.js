@@ -1,8 +1,11 @@
 'use strict'
 
-var assert = require('assert')
 var test = require('tape')
 var hook = require('../')
+
+// The use of deepEqual as opposed to deepStrictEqual in these test is not
+// ideal since it evaluates {} to be equal to [] etc. But if we wanna use tape
+// or assert, this have to do for now.
 
 test('all modules', function (t) {
   t.plan(8)
@@ -75,20 +78,14 @@ test('cache', function (t) {
     return exports
   })
 
-  t.doesNotThrow(function () {
-    // tape does not have a deepStrictEqual :(
-    assert.deepStrictEqual(hook.cache, {})
-  })
+  t.deepEqual(hook.cache, {})
   t.equal(require('child_process').foo, 1)
 
   t.deepEqual(Object.keys(hook.cache), ['child_process'])
   t.equal(require('child_process').foo, 1)
 
   delete hook.cache['child_process']
-  t.doesNotThrow(function () {
-    // tape does not have a deepStrictEqual :(
-    assert.deepStrictEqual(hook.cache, {})
-  })
+  t.deepEqual(hook.cache, {})
 
   t.equal(require('child_process').foo, 2)
   t.deepEqual(Object.keys(hook.cache), ['child_process'])
@@ -100,15 +97,9 @@ test('circular', function (t) {
   t.plan(2)
 
   hook(['circular'], function (exports, name, basedir) {
-    t.doesNotThrow(function () {
-      // tape does not have a deepStrictEqual :(
-      assert.deepStrictEqual(exports, { foo: 1 })
-    })
+    t.deepEqual(exports, { foo: 1 })
     return exports
   })
 
-  t.doesNotThrow(function () {
-    // tape does not have a deepStrictEqual :(
-    assert.deepStrictEqual(require('./node_modules/circular'), { foo: 1 })
-  })
+  t.deepEqual(require('./node_modules/circular'), { foo: 1 })
 })
