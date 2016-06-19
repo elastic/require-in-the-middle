@@ -21,6 +21,13 @@ module.exports = function hook (modules, onrequire) {
   Module._load = function (request, parent, isMain) {
     var exports = orig.apply(Module, arguments)
 
+    // Ugly hack to make sure we don't process modules that haven't been
+    // completely evaluated yet. This happens for circular dependencies.
+    if (exports !== null &&
+        typeof exports === 'object' &&
+        !Array.isArray(exports) &&
+        Object.keys(exports).length === 0) return exports
+
     var filename = Module._resolveFilename(request, parent)
     var core = filename.indexOf(path.sep) === -1
     var name, basedir

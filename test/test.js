@@ -1,7 +1,8 @@
 'use strict'
 
+var assert = require('assert')
 var test = require('tape')
-var hook = require('./')
+var hook = require('../')
 
 test('all modules', function (t) {
   t.plan(8)
@@ -64,4 +65,21 @@ test('whitelisted modules', function (t) {
   t.equal(require('ipp-printer').foo, 1)
   t.equal(require('roundround').foo, undefined)
   t.equal(n, 3)
+})
+
+test('circular', function (t) {
+  t.plan(2)
+
+  hook(['circular'], function (exports, name, basedir) {
+    t.doesNotThrow(function () {
+      // tape does not have a deepStrictEqual :(
+      assert.deepStrictEqual(exports, { foo: 1 })
+    })
+    return exports
+  })
+
+  t.doesNotThrow(function () {
+    // tape does not have a deepStrictEqual :(
+    assert.deepStrictEqual(require('./node_modules/circular'), { foo: 1 })
+  })
 })
