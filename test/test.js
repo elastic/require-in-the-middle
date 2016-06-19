@@ -67,6 +67,35 @@ test('whitelisted modules', function (t) {
   t.equal(n, 3)
 })
 
+test('cache', function (t) {
+  var n = 0
+
+  hook(['child_process'], function (exports, name, basedir) {
+    exports.foo = ++n
+    return exports
+  })
+
+  t.doesNotThrow(function () {
+    // tape does not have a deepStrictEqual :(
+    assert.deepStrictEqual(hook.cache, {})
+  })
+  t.equal(require('child_process').foo, 1)
+
+  t.deepEqual(Object.keys(hook.cache), ['child_process'])
+  t.equal(require('child_process').foo, 1)
+
+  delete hook.cache['child_process']
+  t.doesNotThrow(function () {
+    // tape does not have a deepStrictEqual :(
+    assert.deepStrictEqual(hook.cache, {})
+  })
+
+  t.equal(require('child_process').foo, 2)
+  t.deepEqual(Object.keys(hook.cache), ['child_process'])
+
+  t.end()
+})
+
 test('circular', function (t) {
   t.plan(2)
 
