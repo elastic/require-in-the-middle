@@ -103,3 +103,21 @@ test('circular', function (t) {
 
   t.deepEqual(require('./node_modules/circular'), { foo: 1 })
 })
+
+test('internal', function (t) {
+  t.plan(8)
+
+  var loadedModules = []
+  hook({
+    modules: ['internal'],
+    internals: true
+  }, function (exports, name, basedir) {
+    t.true(name.match(/^internal/))
+    t.true(basedir.match(/test\/node_modules\/internal$/))
+    loadedModules.push(name)
+    return exports
+  })
+
+  t.equal(require('./node_modules/internal'), 'Hello world, world')
+  t.deepEqual(loadedModules, ['internal/lib/b.js', 'internal/lib/a.js', 'internal'])
+})
