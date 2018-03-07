@@ -108,8 +108,7 @@ test('internal', function (t) {
   t.plan(8)
 
   var loadedModules = []
-  hook({
-    modules: ['internal'],
+  hook(['internal'], {
     internals: true
   }, function (exports, name, basedir) {
     t.true(name.match(/^internal/))

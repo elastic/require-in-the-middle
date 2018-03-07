@@ -7,8 +7,9 @@ var parse = require('module-details-from-path')
 
 var orig = Module._load
 
-module.exports = function hook (options, onrequire) {
-  if (typeof options === 'function') return hook(null, options)
+module.exports = function hook (modules, options, onrequire) {
+  if (typeof modules === 'function') return hook(null, {}, modules)
+  if (typeof options === 'function') return hook(modules, {}, options)
 
   if (typeof Module._resolveFilename !== 'function') {
     console.error('Error: Expected Module._resolveFilename to be a function (was: %s) - aborting!', typeof Module._resolveFilename)
@@ -17,9 +18,6 @@ module.exports = function hook (options, onrequire) {
   }
 
   options = options || {}
-  if (Array.isArray(options)) {
-    options = { modules: options }
-  }
 
   hook.cache = {}
 
@@ -38,7 +36,7 @@ module.exports = function hook (options, onrequire) {
     var name, basedir
 
     if (core) {
-      if (options.modules && options.modules.indexOf(filename) === -1) return exports // abort if module name isn't on whitelist
+      if (modules && modules.indexOf(filename) === -1) return exports // abort if module name isn't on whitelist
       name = filename
     } else {
       var stat = parse(filename)
@@ -46,7 +44,7 @@ module.exports = function hook (options, onrequire) {
       name = stat.name
       basedir = stat.basedir
 
-      if (options.modules && options.modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
+      if (modules && modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
 
       // figure out if this is the main module file, or a file inside the module
       try {
@@ -55,7 +53,9 @@ module.exports = function hook (options, onrequire) {
         return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
       }
       if (res !== filename) {
+        // this is a module-internal file
         if (options.internals) {
+          // use the module-relative path to the file, prefixed by original module name
           name = name + path.sep + path.relative(basedir, filename)
         } else return exports // abort if not main module file
       }
