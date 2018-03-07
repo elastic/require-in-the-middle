@@ -37,21 +37,31 @@ hook(['express', 'mongodb'], function (exports, name, basedir) {
 The require-in-the-middle module exposes a single function:
 
 ```js
-function ([modules, ]onrequire) {}
+function ([modules][, options], onrequire) {}
 ```
 
-You can optionally supply an array of module names as the first argument
-to limit which modules will trigger a call of the `onrequire` callback.
+- `modules` <string[]> An optional array of module names to limit which modules
+  trigger a call of the `onrequire` callback. If specified, this must be the
+  first argument.
+- `options` <Object> An optional object containing fields that change when the
+  `onrequire` callback is called. If specified, this must be the second
+  argument.
+  - `options.internals` <boolean> Specifies whether `onrequire` should be called
+    when module-internal files are loaded; defaults to `false`.
+- `onrequire` <Function> The function to call when a module is required.
 
 Supply a callback function as the last argument. This function will be
 called the first time a module is required. The `onrequire` function is
 called with three arguments:
 
-- `exports` - The value of the `module.exports` property that would
-  normally be exposed by the required module
-- `name` - The name of the module being required
-- `basedir` - The directory of the where the module is located (will be
-  `undefined` if core module)
+- `exports` <Object> The value of the `module.exports` property that would
+  normally be exposed by the required module.
+- `name` <string> The name of the module being required. If `options.internals`
+  was set to `true`, the path of module-internal files that are loaded
+  (relative to `basedir`) will be appended to the module name, separated by
+  `path.sep`.
+- `basedir` <string> The directory where the module is located, or `undefined`
+  for core modules.
 
 Return the value you want the module to expose (normally the `exports`
 argument).
