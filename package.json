@@ -4,7 +4,7 @@
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
   "dependencies": {
-    "module-details-from-path": "^1.0.2",
+    "module-details-from-path": "^1.0.3",
     "resolve": "^1.1.7"
   },
   "devDependencies": {
