@@ -61,9 +61,14 @@ module.exports = function hook (modules, options, onrequire) {
       }
     }
 
-    if (hook.cache[filename]) return exports // abort if module have already been processed
-    hook.cache[filename] = exports
+    // only call onrequire the first time a module is loaded
+    if (!hook.cache.hasOwnProperty(filename)) {
+      // ensure that the cache entry is assigned a value before calling
+      // onrequire, in case calling onrequire requires the same module.
+      hook.cache[filename] = exports
+      hook.cache[filename] = onrequire(exports, name, basedir)
+    }
 
-    return onrequire(exports, name, basedir)
+    return hook.cache[filename]
   }
 }

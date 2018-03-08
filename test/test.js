@@ -93,6 +93,19 @@ test('cache', function (t) {
   t.end()
 })
 
+test('replacement value', function (t) {
+  var replacement = {}
+
+  hook(['url'], function (exports, name, basedir) {
+    return replacement
+  })
+
+  t.deepEqual(require('url'), replacement)
+  t.deepEqual(require('url'), replacement)
+
+  t.end()
+})
+
 test('circular', function (t) {
   t.plan(2)
 
