@@ -44,6 +44,19 @@ module.exports = function hook (modules, options, onrequire) {
       name = stat.name
       basedir = stat.basedir
 
+      // get the absolute file name of the module being `require`d
+      var absFile = path.join(name, stat.path);
+
+      // get the relative file name (without the extension) of the module being `require`d
+      var relFile = absFile.replace(path.extname(stat.path), '');
+
+      // figure out if the absolute file name is in the whitelist
+      if (modules.indexOf(absFile) !== -1)
+        name = absFile;
+      // figure out if the relative file name is in the whitelist
+      else if (modules.indexOf(relFile) !== -1)
+        name = relFile;
+
       if (modules && modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
 
       // figure out if this is the main module file, or a file inside the module
