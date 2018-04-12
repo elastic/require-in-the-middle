@@ -5,7 +5,7 @@ var Module = require('module')
 var resolve = require('resolve')
 var parse = require('module-details-from-path')
 
-var orig = Module._load
+var orig = Module.prototype.require
 
 module.exports = function hook (modules, options, onrequire) {
   if (typeof modules === 'function') return hook(null, {}, modules)
@@ -21,19 +21,33 @@ module.exports = function hook (modules, options, onrequire) {
 
   hook.cache = {}
 
-  Module._load = function (request, parent, isMain) {
-    var exports = orig.apply(Module, arguments)
+  var patching = {}
 
-    // Ugly hack to make sure we don't process modules that haven't been
-    // completely evaluated yet. This happens for circular dependencies.
-    if (exports !== null &&
-        typeof exports === 'object' &&
-        !Array.isArray(exports) &&
-        Object.keys(exports).length === 0) return exports
-
-    var filename = Module._resolveFilename(request, parent)
+  Module.prototype.require = function (request) {
+    var filename = Module._resolveFilename(request, this)
     var core = filename.indexOf(path.sep) === -1
     var name, basedir
+
+    // return known patched modules immediately
+    if (hook.cache.hasOwnProperty(filename)) {
+      return hook.cache[filename]
+    }
+
+    // Check if this module has a patcher in-progress already.
+    // Otherwise, mark this module as patching in-progress.
+    var patched = patching[filename]
+    if (!patched) {
+      patching[filename] = true
+    }
+
+    var exports = orig.apply(this, arguments)
+
+    // If it's already patched, just return it as-is.
+    if (patched) return exports
+
+    // The module has already been loaded,
+    // so the patching mark can be cleaned up.
+    delete patching[filename]
 
     if (core) {
       if (modules && modules.indexOf(filename) === -1) return exports // abort if module name isn't on whitelist

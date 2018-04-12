@@ -117,6 +117,23 @@ test('circular', function (t) {
   t.deepEqual(require('./node_modules/circular'), { foo: 1 })
 })
 
+test('mid circular applies to completed module', function (t) {
+  t.plan(2)
+
+  var expected = {
+    foo: 1,
+    multiCircular: 4,
+    baz: 'buz'
+  }
+
+  hook(['mid-circular'], function (exports, name, basedir) {
+    t.deepEqual(exports, expected)
+    return exports
+  })
+
+  t.deepEqual(require('./node_modules/mid-circular'), expected)
+})
+
 test('internal', function (t) {
   t.plan(8)
 
