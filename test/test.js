@@ -4,7 +4,7 @@ var Module = require('module')
 var origRequire = Module.prototype.require
 
 var test = require('tape')
-var hook = require('../')
+var Hook = require('../')
 
 // The use of deepEqual as opposed to deepStrictEqual in these test is not
 // ideal since it evaluates {} to be equal to [] etc. But if we wanna use tape
@@ -16,7 +16,7 @@ test('all modules', function (t) {
 
   var n = 1
 
-  hook(function (exports, name, basedir) {
+  var hook = Hook(function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'http')
@@ -50,7 +50,7 @@ test('whitelisted modules', function (t) {
 
   var n = 1
 
-  hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
+  Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'ipp-printer')
@@ -79,7 +79,7 @@ test('cache', function (t) {
   reset()
   var n = 0
 
-  hook(['child_process'], function (exports, name, basedir) {
+  var hook = Hook(['child_process'], function (exports, name, basedir) {
     exports.foo = ++n
     return exports
   })
@@ -103,7 +103,7 @@ test('replacement value', function (t) {
   reset()
   var replacement = {}
 
-  hook(['url'], function (exports, name, basedir) {
+  Hook(['url'], function (exports, name, basedir) {
     return replacement
   })
 
@@ -117,7 +117,7 @@ test('circular', function (t) {
   reset()
   t.plan(2)
 
-  hook(['circular'], function (exports, name, basedir) {
+  Hook(['circular'], function (exports, name, basedir) {
     t.deepEqual(exports, { foo: 1 })
     return exports
   })
@@ -135,7 +135,7 @@ test('mid circular applies to completed module', function (t) {
     baz: 'buz'
   }
 
-  hook(['mid-circular'], function (exports, name, basedir) {
+  Hook(['mid-circular'], function (exports, name, basedir) {
     t.deepEqual(exports, expected)
     return exports
   })
@@ -148,7 +148,7 @@ test('internal', function (t) {
   t.plan(8)
 
   var loadedModules = []
-  hook(['internal'], {
+  Hook(['internal'], {
     internals: true
   }, function (exports, name, basedir) {
     t.true(name.match(/^internal/))
@@ -163,21 +163,36 @@ test('internal', function (t) {
 
 test('multiple hooks', function (t) {
   reset()
-  t.plan(2)
+  t.plan(6)
 
-  hook(['http'], function (exports, name, basedir) {
+  Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
+    exports.hook1 = true
+    return exports
+  })
+
+  // in the same tick
+  Hook(['net'], function (exports, name, basedir) {
+    t.equal(name, 'net')
+    exports.hook2 = true
     return exports
   })
 
   setTimeout(function () {
-    hook(['net'], function (exports, name, basedir) {
+    // at a later tick
+    Hook(['net'], function (exports, name, basedir) {
       t.equal(name, 'net')
+      exports.hook3 = true
       return exports
     })
 
-    require('http')
-    require('net')
+    var http = require('http')
+    var net = require('net')
+
+    t.equal(http.hook1, true)
+    t.equal(net.hook2, true)
+    t.equal(net.hook3, true)
+    t.end()
   }, 50)
 })
 
