@@ -1,5 +1,8 @@
 'use strict'
 
+var Module = require('module')
+var origRequire = Module.prototype.require
+
 var test = require('tape')
 var hook = require('../')
 
@@ -8,6 +11,7 @@ var hook = require('../')
 // or assert, this have to do for now.
 
 test('all modules', function (t) {
+  reset()
   t.plan(8)
 
   var n = 1
@@ -41,6 +45,7 @@ test('all modules', function (t) {
 })
 
 test('whitelisted modules', function (t) {
+  reset()
   t.plan(8)
 
   var n = 1
@@ -71,6 +76,7 @@ test('whitelisted modules', function (t) {
 })
 
 test('cache', function (t) {
+  reset()
   var n = 0
 
   hook(['child_process'], function (exports, name, basedir) {
@@ -94,6 +100,7 @@ test('cache', function (t) {
 })
 
 test('replacement value', function (t) {
+  reset()
   var replacement = {}
 
   hook(['url'], function (exports, name, basedir) {
@@ -107,6 +114,7 @@ test('replacement value', function (t) {
 })
 
 test('circular', function (t) {
+  reset()
   t.plan(2)
 
   hook(['circular'], function (exports, name, basedir) {
@@ -118,6 +126,7 @@ test('circular', function (t) {
 })
 
 test('mid circular applies to completed module', function (t) {
+  reset()
   t.plan(2)
 
   var expected = {
@@ -135,6 +144,7 @@ test('mid circular applies to completed module', function (t) {
 })
 
 test('internal', function (t) {
+  reset()
   t.plan(8)
 
   var loadedModules = []
@@ -150,3 +160,27 @@ test('internal', function (t) {
   t.equal(require('./node_modules/internal'), 'Hello world, world')
   t.deepEqual(loadedModules, ['internal/lib/b.js', 'internal/lib/a.js', 'internal'])
 })
+
+test('multiple hooks', function (t) {
+  reset()
+  t.plan(2)
+
+  hook(['http'], function (exports, name, basedir) {
+    t.equal(name, 'http')
+    return exports
+  })
+
+  setTimeout(function () {
+    hook(['net'], function (exports, name, basedir) {
+      t.equal(name, 'net')
+      return exports
+    })
+
+    require('http')
+    require('net')
+  }, 50)
+})
+
+function reset () {
+  Module.prototype.require = origRequire
+}

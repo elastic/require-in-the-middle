@@ -5,8 +5,6 @@ var Module = require('module')
 var resolve = require('resolve')
 var parse = require('module-details-from-path')
 
-var orig = Module.prototype.require
-
 module.exports = function hook (modules, options, onrequire) {
   if (typeof modules === 'function') return hook(null, {}, modules)
   if (typeof options === 'function') return hook(modules, {}, options)
@@ -22,6 +20,7 @@ module.exports = function hook (modules, options, onrequire) {
   hook.cache = {}
 
   var patching = {}
+  var orig = Module.prototype.require
 
   Module.prototype.require = function (request) {
     var filename = Module._resolveFilename(request, this)
