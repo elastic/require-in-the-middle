@@ -5,11 +5,16 @@ var Module = require('module')
 var resolve = require('resolve')
 var parse = require('module-details-from-path')
 
-var orig = Module.prototype.require
-
-module.exports = function hook (modules, options, onrequire) {
-  if (typeof modules === 'function') return hook(null, {}, modules)
-  if (typeof options === 'function') return hook(modules, {}, options)
+module.exports = function Hook (modules, options, onrequire) {
+  if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
+  if (typeof modules === 'function') {
+    onrequire = modules
+    modules = null
+    options = {}
+  } else if (typeof options === 'function') {
+    onrequire = options
+    options = {}
+  }
 
   if (typeof Module._resolveFilename !== 'function') {
     console.error('Error: Expected Module._resolveFilename to be a function (was: %s) - aborting!', typeof Module._resolveFilename)
@@ -19,9 +24,11 @@ module.exports = function hook (modules, options, onrequire) {
 
   options = options || {}
 
-  hook.cache = {}
+  this.cache = {}
 
+  var self = this
   var patching = {}
+  var orig = Module.prototype.require
 
   Module.prototype.require = function (request) {
     var filename = Module._resolveFilename(request, this)
@@ -29,8 +36,8 @@ module.exports = function hook (modules, options, onrequire) {
     var name, basedir
 
     // return known patched modules immediately
-    if (hook.cache.hasOwnProperty(filename)) {
-      return hook.cache[filename]
+    if (self.cache.hasOwnProperty(filename)) {
+      return self.cache[filename]
     }
 
     // Check if this module has a patcher in-progress already.
@@ -76,13 +83,13 @@ module.exports = function hook (modules, options, onrequire) {
     }
 
     // only call onrequire the first time a module is loaded
-    if (!hook.cache.hasOwnProperty(filename)) {
+    if (!self.cache.hasOwnProperty(filename)) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
-      hook.cache[filename] = exports
-      hook.cache[filename] = onrequire(exports, name, basedir)
+      self.cache[filename] = exports
+      self.cache[filename] = onrequire(exports, name, basedir)
     }
 
-    return hook.cache[filename]
+    return self.cache[filename]
   }
 }
