@@ -3,6 +3,8 @@
 Hook into the Node.js `require` function. This allows you to modify
 modules on-the-fly as they are being required.
 
+[![npm](https://nodei.co/npm/require-in-the-middle.png)](https://www.npmjs.com/package/require-in-the-middle)
+
 [![Build status](https://travis-ci.org/elastic/require-in-the-middle.svg?branch=master)](https://travis-ci.org/elastic/require-in-the-middle)
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
 
@@ -50,9 +52,8 @@ function ([modules][, options], onrequire) {}
     when module-internal files are loaded; defaults to `false`.
 - `onrequire` &lt;Function> The function to call when a module is required.
 
-Supply a callback function as the last argument. This function will be
-called the first time a module is required. The `onrequire` function is
-called with three arguments:
+The `onrequire` callback will be called the first time a module is
+required. The function is called with three arguments:
 
 - `exports` &lt;Object> The value of the `module.exports` property that would
   normally be exposed by the required module.
@@ -68,4 +69,4 @@ argument).
 
 ## License
 
-MIT
+[MIT](https://github.com/elastic/require-in-the-middle/blob/master/LICENSE)
