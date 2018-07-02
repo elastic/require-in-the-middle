@@ -5,7 +5,9 @@ var Module = require('module')
 var resolve = require('resolve')
 var parse = require('module-details-from-path')
 
-module.exports = function Hook (modules, options, onrequire) {
+module.exports = Hook
+
+function Hook (modules, options, onrequire) {
   if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
   if (typeof modules === 'function') {
     onrequire = modules
@@ -25,12 +27,20 @@ module.exports = function Hook (modules, options, onrequire) {
   options = options || {}
 
   this.cache = {}
+  this._unhooked = false
+  this._origRequire = Module.prototype.require
 
   var self = this
   var patching = {}
-  var orig = Module.prototype.require
 
-  Module.prototype.require = function (request) {
+  this._require = Module.prototype.require = function (request) {
+    if (self._unhooked) {
+      // if the patched require function could not be removed because
+      // someone else patched it after it was patched here, we just
+      // abort and pass the request onwards to the original require
+      return self._origRequire.apply(this, arguments)
+    }
+
     var filename = Module._resolveFilename(request, this)
     var core = filename.indexOf(path.sep) === -1
     var name, basedir
@@ -47,7 +57,7 @@ module.exports = function Hook (modules, options, onrequire) {
       patching[filename] = true
     }
 
-    var exports = orig.apply(this, arguments)
+    var exports = self._origRequire.apply(this, arguments)
 
     // If it's already patched, just return it as-is.
     if (patched) return exports
@@ -91,5 +101,12 @@ module.exports = function Hook (modules, options, onrequire) {
     }
 
     return self.cache[filename]
+  }
+}
+
+Hook.prototype.unhook = function () {
+  this._unhooked = true
+  if (this._require === Module.prototype.require) {
+    Module.prototype.require = this._origRequire
   }
 }
