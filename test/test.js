@@ -1,8 +1,5 @@
 'use strict'
 
-var Module = require('module')
-var origRequire = Module.prototype.require
-
 var test = require('tape')
 var Hook = require('../')
 
@@ -10,8 +7,16 @@ var Hook = require('../')
 // ideal since it evaluates {} to be equal to [] etc. But if we wanna use tape
 // or assert, this have to do for now.
 
+test('hook.unhook()', function (t) {
+  var hook = Hook(['http'], function (exports, name, basedir) {
+    t.fail('should not call onrequire')
+  })
+  hook.unhook()
+  require('http')
+  t.end()
+})
+
 test('all modules', function (t) {
-  reset()
   t.plan(8)
 
   var n = 1
@@ -33,6 +38,10 @@ test('all modules', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   var http = require('http')
   var net = require('net')
 
@@ -45,12 +54,11 @@ test('all modules', function (t) {
 })
 
 test('whitelisted modules', function (t) {
-  reset()
   t.plan(8)
 
   var n = 1
 
-  Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
+  var hook = Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'ipp-printer')
@@ -67,6 +75,10 @@ test('whitelisted modules', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   t.equal(require('dgram').foo, undefined)
   t.equal(require('ipp-printer').foo, 1)
   t.equal(require('patterns').foo, 2)
@@ -76,12 +88,15 @@ test('whitelisted modules', function (t) {
 })
 
 test('cache', function (t) {
-  reset()
   var n = 0
 
   var hook = Hook(['child_process'], function (exports, name, basedir) {
     exports.foo = ++n
     return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
   })
 
   t.deepEqual(hook.cache, {})
@@ -100,33 +115,37 @@ test('cache', function (t) {
 })
 
 test('replacement value', function (t) {
-  reset()
   var replacement = {}
 
-  Hook(['url'], function (exports, name, basedir) {
+  var hook = Hook(['url'], function (exports, name, basedir) {
     return replacement
+  })
+
+  t.on('end', function () {
+    hook.unhook()
   })
 
   t.deepEqual(require('url'), replacement)
   t.deepEqual(require('url'), replacement)
-
   t.end()
 })
 
 test('circular', function (t) {
-  reset()
   t.plan(2)
 
-  Hook(['circular'], function (exports, name, basedir) {
+  var hook = Hook(['circular'], function (exports, name, basedir) {
     t.deepEqual(exports, { foo: 1 })
     return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
   })
 
   t.deepEqual(require('./node_modules/circular'), { foo: 1 })
 })
 
 test('mid circular applies to completed module', function (t) {
-  reset()
   t.plan(2)
 
   var expected = {
@@ -135,20 +154,23 @@ test('mid circular applies to completed module', function (t) {
     baz: 'buz'
   }
 
-  Hook(['mid-circular'], function (exports, name, basedir) {
+  var hook = Hook(['mid-circular'], function (exports, name, basedir) {
     t.deepEqual(exports, expected)
     return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
   })
 
   t.deepEqual(require('./node_modules/mid-circular'), expected)
 })
 
 test('internal', function (t) {
-  reset()
   t.plan(8)
 
   var loadedModules = []
-  Hook(['internal'], {
+  var hook = Hook(['internal'], {
     internals: true
   }, function (exports, name, basedir) {
     t.true(name.match(/^internal/))
@@ -157,34 +179,44 @@ test('internal', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   t.equal(require('./node_modules/internal'), 'Hello world, world')
   t.deepEqual(loadedModules, ['internal/lib/b.js', 'internal/lib/a.js', 'internal'])
 })
 
 test('multiple hooks', function (t) {
-  reset()
   t.plan(6)
 
-  Hook(['http'], function (exports, name, basedir) {
+  var hooks = []
+  t.on('end', function () {
+    hooks.forEach(function (hook) {
+      hook.unhook()
+    })
+  })
+
+  hooks.push(Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
     exports.hook1 = true
     return exports
-  })
+  }))
 
   // in the same tick
-  Hook(['net'], function (exports, name, basedir) {
+  hooks.push(Hook(['net'], function (exports, name, basedir) {
     t.equal(name, 'net')
     exports.hook2 = true
     return exports
-  })
+  }))
 
   setTimeout(function () {
     // at a later tick
-    Hook(['net'], function (exports, name, basedir) {
+    hooks.push(Hook(['net'], function (exports, name, basedir) {
       t.equal(name, 'net')
       exports.hook3 = true
       return exports
-    })
+    }))
 
     var http = require('http')
     var net = require('net')
@@ -196,6 +228,24 @@ test('multiple hooks', function (t) {
   }, 50)
 })
 
-function reset () {
-  Module.prototype.require = origRequire
-}
+test('multiple hook.unhook()', function (t) {
+  t.plan(2)
+
+  var hook1 = Hook(['http'], function (exports, name, basedir) {
+    t.fail('should not call onrequire')
+  })
+
+  var hook2 = Hook(['http'], function (exports, name, basedir) {
+    t.equal(name, 'http')
+    exports.hook2 = true
+    return exports
+  })
+
+  hook1.unhook()
+
+  var http = require('http')
+  t.equal(http.hook2, true)
+
+  hook2.unhook()
+  t.end()
+})

@@ -18,10 +18,10 @@ npm install require-in-the-middle --save
 
 ```js
 var path = require('path')
-var hook = require('require-in-the-middle')
+var Hook = require('require-in-the-middle')
 
 // Hook into the express and mongodb module
-hook(['express', 'mongodb'], function (exports, name, basedir) {
+Hook(['express', 'mongodb'], function (exports, name, basedir) {
   var version = require(path.join(basedir, 'package.json')).version
 
   console.log('loading %s@%s', name, version)
@@ -38,9 +38,11 @@ hook(['express', 'mongodb'], function (exports, name, basedir) {
 
 The require-in-the-middle module exposes a single function:
 
-```js
-function ([modules][, options], onrequire) {}
-```
+### `hook = Hook([modules][, options], onrequire)`
+
+When called a `hook` object is returned.
+
+Arguments:
 
 - `modules` &lt;string[]> An optional array of module names to limit which modules
   trigger a call of the `onrequire` callback. If specified, this must be the
@@ -66,6 +68,11 @@ required. The function is called with three arguments:
 
 Return the value you want the module to expose (normally the `exports`
 argument).
+
+### `hook.unhook()`
+
+Removes the `onrequire` callback so that it will not be triggerd by
+subsequent calls to `require()`.
 
 ## License
 
