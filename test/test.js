@@ -38,6 +38,10 @@ test('all modules', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   var http = require('http')
   var net = require('net')
 
@@ -47,8 +51,6 @@ test('all modules', function (t) {
   t.deepEqual(hook.cache['http'], http)
   t.deepEqual(hook.cache['net'], net)
   t.equal(n, 3)
-
-  hook.unhook()
 })
 
 test('whitelisted modules', function (t) {
@@ -73,14 +75,16 @@ test('whitelisted modules', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   t.equal(require('dgram').foo, undefined)
   t.equal(require('ipp-printer').foo, 1)
   t.equal(require('patterns').foo, 2)
   t.equal(require('ipp-printer').foo, 1)
   t.equal(require('roundround').foo, undefined)
   t.equal(n, 3)
-
-  hook.unhook()
 })
 
 test('cache', function (t) {
@@ -89,6 +93,10 @@ test('cache', function (t) {
   var hook = Hook(['child_process'], function (exports, name, basedir) {
     exports.foo = ++n
     return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
   })
 
   t.deepEqual(hook.cache, {})
@@ -103,7 +111,6 @@ test('cache', function (t) {
   t.equal(require('child_process').foo, 2)
   t.deepEqual(Object.keys(hook.cache), ['child_process'])
 
-  hook.unhook()
   t.end()
 })
 
@@ -114,10 +121,12 @@ test('replacement value', function (t) {
     return replacement
   })
 
-  t.deepEqual(require('url'), replacement)
-  t.deepEqual(require('url'), replacement)
+  t.on('end', function () {
+    hook.unhook()
+  })
 
-  hook.unhook()
+  t.deepEqual(require('url'), replacement)
+  t.deepEqual(require('url'), replacement)
   t.end()
 })
 
@@ -148,9 +157,11 @@ test('mid circular applies to completed module', function (t) {
     return exports
   })
 
-  t.deepEqual(require('./node_modules/mid-circular'), expected)
+  t.on('end', function () {
+    hook.unhook()
+  })
 
-  hook.unhook()
+  t.deepEqual(require('./node_modules/mid-circular'), expected)
 })
 
 test('internal', function (t) {
@@ -166,35 +177,44 @@ test('internal', function (t) {
     return exports
   })
 
+  t.on('end', function () {
+    hook.unhook()
+  })
+
   t.equal(require('./node_modules/internal'), 'Hello world, world')
   t.deepEqual(loadedModules, ['internal/lib/b.js', 'internal/lib/a.js', 'internal'])
-
-  hook.unhook()
 })
 
 test('multiple hooks', function (t) {
   t.plan(6)
 
-  var hook1 = Hook(['http'], function (exports, name, basedir) {
+  var hooks = []
+  t.on('end', function () {
+    hooks.forEach(function (hook) {
+      hook.unhook()
+    })
+  })
+
+  hooks.push(Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
     exports.hook1 = true
     return exports
-  })
+  }))
 
   // in the same tick
-  var hook2 = Hook(['net'], function (exports, name, basedir) {
+  hooks.push(Hook(['net'], function (exports, name, basedir) {
     t.equal(name, 'net')
     exports.hook2 = true
     return exports
-  })
+  }))
 
   setTimeout(function () {
     // at a later tick
-    var hook3 = Hook(['net'], function (exports, name, basedir) {
+    hooks.push(Hook(['net'], function (exports, name, basedir) {
       t.equal(name, 'net')
       exports.hook3 = true
       return exports
-    })
+    }))
 
     var http = require('http')
     var net = require('net')
@@ -202,10 +222,6 @@ test('multiple hooks', function (t) {
     t.equal(http.hook1, true)
     t.equal(net.hook2, true)
     t.equal(net.hook3, true)
-
-    hook1.unhook()
-    hook2.unhook()
-    hook3.unhook()
     t.end()
   }, 50)
 })
