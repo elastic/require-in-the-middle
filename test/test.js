@@ -138,9 +138,11 @@ test('circular', function (t) {
     return exports
   })
 
-  t.deepEqual(require('./node_modules/circular'), { foo: 1 })
+  t.on('end', function () {
+    hook.unhook()
+  })
 
-  hook.unhook()
+  t.deepEqual(require('./node_modules/circular'), { foo: 1 })
 })
 
 test('mid circular applies to completed module', function (t) {
