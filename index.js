@@ -3,6 +3,7 @@
 var path = require('path')
 var Module = require('module')
 var resolve = require('resolve')
+var debug = require('debug')('require-in-the-middle')
 var parse = require('module-details-from-path')
 
 module.exports = Hook
@@ -33,11 +34,14 @@ function Hook (modules, options, onrequire) {
   var self = this
   var patching = {}
 
+  debug('registering require hook')
+
   this._require = Module.prototype.require = function (request) {
     if (self._unhooked) {
       // if the patched require function could not be removed because
       // someone else patched it after it was patched here, we just
       // abort and pass the request onwards to the original require
+      debug('ignoring require call - module is soft-unhooked')
       return self._origRequire.apply(this, arguments)
     }
 
@@ -45,8 +49,11 @@ function Hook (modules, options, onrequire) {
     var core = filename.indexOf(path.sep) === -1
     var name, basedir
 
+    debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
+
     // return known patched modules immediately
     if (self.cache.hasOwnProperty(filename)) {
+      debug('returning already patched cached module: %s', filename)
       return self.cache[filename]
     }
 
@@ -60,20 +67,31 @@ function Hook (modules, options, onrequire) {
     var exports = self._origRequire.apply(this, arguments)
 
     // If it's already patched, just return it as-is.
-    if (patched) return exports
+    if (patched) {
+      debug('module is in the process of being patched already - ignoring: %s', filename)
+      return exports
+    }
 
     // The module has already been loaded,
     // so the patching mark can be cleaned up.
     delete patching[filename]
 
     if (core) {
-      if (modules && modules.indexOf(filename) === -1) return exports // abort if module name isn't on whitelist
+      if (modules && modules.indexOf(filename) === -1) {
+        debug('ignoring core module not on whitelist: %s', filename)
+        return exports // abort if module name isn't on whitelist
+      }
       name = filename
     } else {
       var stat = parse(filename)
-      if (!stat) return exports // abort if filename could not be parsed
+      if (!stat) {
+        debug('could not parse filename: %s', filename)
+        return exports // abort if filename could not be parsed
+      }
       name = stat.name
       basedir = stat.basedir
+
+      debug('resolved filename to module: %s (request: %s, basedir: %s)', name, request, basedir)
 
       if (modules && modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
 
@@ -81,6 +99,7 @@ function Hook (modules, options, onrequire) {
       try {
         var res = resolve.sync(name, { basedir: basedir })
       } catch (e) {
+        debug('could not resolve module: %s', name)
         return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
       }
       if (res !== filename) {
@@ -88,7 +107,11 @@ function Hook (modules, options, onrequire) {
         if (options.internals) {
           // use the module-relative path to the file, prefixed by original module name
           name = name + path.sep + path.relative(basedir, filename)
-        } else return exports // abort if not main module file
+          debug('preparing to process require of internal file: %s', name)
+        } else {
+          debug('ignoring require of non-main module file: %s', res)
+          return exports // abort if not main module file
+        }
       }
     }
 
@@ -97,9 +120,11 @@ function Hook (modules, options, onrequire) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
       self.cache[filename] = exports
+      debug('calling require hook: %s', name)
       self.cache[filename] = onrequire(exports, name, basedir)
     }
 
+    debug('returning module: %s', name)
     return self.cache[filename]
   }
 }
@@ -108,5 +133,8 @@ Hook.prototype.unhook = function () {
   this._unhooked = true
   if (this._require === Module.prototype.require) {
     Module.prototype.require = this._origRequire
+    debug('unhook successful')
+  } else {
+    debug('unhook unsuccessful')
   }
 }
