@@ -47,7 +47,7 @@ function Hook (modules, options, onrequire) {
 
     var filename = Module._resolveFilename(request, this)
     var core = filename.indexOf(path.sep) === -1
-    var name, basedir
+    var moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
 
@@ -81,33 +81,33 @@ function Hook (modules, options, onrequire) {
         debug('ignoring core module not on whitelist: %s', filename)
         return exports // abort if module name isn't on whitelist
       }
-      name = filename
+      moduleName = filename
     } else {
       var stat = parse(filename)
       if (!stat) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
       }
-      name = stat.name
+      moduleName = stat.name
       basedir = stat.basedir
 
-      debug('resolved filename to module: %s (request: %s, basedir: %s)', name, request, basedir)
+      debug('resolved filename to module: %s (request: %s, basedir: %s)', moduleName, request, basedir)
 
-      if (modules && modules.indexOf(name) === -1) return exports // abort if module name isn't on whitelist
+      if (modules && modules.indexOf(moduleName) === -1) return exports // abort if module name isn't on whitelist
 
       // figure out if this is the main module file, or a file inside the module
       try {
-        var res = resolve.sync(name, { basedir: basedir })
+        var res = resolve.sync(moduleName, { basedir: basedir })
       } catch (e) {
-        debug('could not resolve module: %s', name)
+        debug('could not resolve module: %s', moduleName)
         return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
       }
       if (res !== filename) {
         // this is a module-internal file
         if (options.internals) {
           // use the module-relative path to the file, prefixed by original module name
-          name = name + path.sep + path.relative(basedir, filename)
-          debug('preparing to process require of internal file: %s', name)
+          moduleName = moduleName + path.sep + path.relative(basedir, filename)
+          debug('preparing to process require of internal file: %s', moduleName)
         } else {
           debug('ignoring require of non-main module file: %s', res)
           return exports // abort if not main module file
@@ -120,11 +120,11 @@ function Hook (modules, options, onrequire) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
       self.cache[filename] = exports
-      debug('calling require hook: %s', name)
-      self.cache[filename] = onrequire(exports, name, basedir)
+      debug('calling require hook: %s', moduleName)
+      self.cache[filename] = onrequire(exports, moduleName, basedir)
     }
 
-    debug('returning module: %s', name)
+    debug('returning module: %s', moduleName)
     return self.cache[filename]
   }
 }
