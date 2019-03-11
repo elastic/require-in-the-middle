@@ -8,6 +8,9 @@ var parse = require('module-details-from-path')
 
 module.exports = Hook
 
+// 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
+var normalize = /([/\\]index)?(\.js)?$/
+
 function Hook (modules, options, onrequire) {
   if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
   if (typeof modules === 'function') {
@@ -91,26 +94,37 @@ function Hook (modules, options, onrequire) {
       moduleName = stat.name
       basedir = stat.basedir
 
-      debug('resolved filename to module: %s (request: %s, basedir: %s)', moduleName, request, basedir)
+      var fullModuleName = resolveModuleName(stat)
 
-      if (modules && modules.indexOf(moduleName) === -1) return exports // abort if module name isn't on whitelist
+      debug('resolved filename to module: %s (request: %s, resolved: %s, basedir: %s)', moduleName, request, fullModuleName, basedir)
 
-      // figure out if this is the main module file, or a file inside the module
-      try {
-        var res = resolve.sync(moduleName, { basedir: basedir })
-      } catch (e) {
-        debug('could not resolve module: %s', moduleName)
-        return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
-      }
-      if (res !== filename) {
-        // this is a module-internal file
-        if (options.internals) {
-          // use the module-relative path to the file, prefixed by original module name
-          moduleName = moduleName + path.sep + path.relative(basedir, filename)
-          debug('preparing to process require of internal file: %s', moduleName)
-        } else {
-          debug('ignoring require of non-main module file: %s', res)
-          return exports // abort if not main module file
+      // Ex: require('foo/lib/../bar.js')
+      // moduleName = 'foo'
+      // fullModuleName = 'foo/bar'
+      if (modules && modules.indexOf(moduleName) === -1) {
+        if (modules.indexOf(fullModuleName) === -1) return exports // abort if module name isn't on whitelist
+
+        // if we get to this point, it means that we're requiring a whitelisted sub-module
+        moduleName = fullModuleName
+      } else {
+        // figure out if this is the main module file, or a file inside the module
+        try {
+          var res = resolve.sync(moduleName, { basedir: basedir })
+        } catch (e) {
+          debug('could not resolve module: %s', moduleName)
+          return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
+        }
+
+        if (res !== filename) {
+          // this is a module-internal file
+          if (options.internals) {
+            // use the module-relative path to the file, prefixed by original module name
+            moduleName = moduleName + path.sep + path.relative(basedir, filename)
+            debug('preparing to process require of internal file: %s', moduleName)
+          } else {
+            debug('ignoring require of non-main module file: %s', res)
+            return exports // abort if not main module file
+          }
         }
       }
     }
@@ -137,4 +151,9 @@ Hook.prototype.unhook = function () {
   } else {
     debug('unhook unsuccessful')
   }
+}
+
+function resolveModuleName (stat) {
+  const normalizedPath = path.sep !== '/' ? stat.path.split(path.sep).join('/') : stat.path
+  return path.posix.join(stat.name, normalizedPath).replace(normalize, '')
 }

@@ -16,7 +16,7 @@
     "tape": "^4.9.0"
   },
   "scripts": {
-    "test": "standard && tape test/test.js"
+    "test": "standard && tape test/*.js"
   },
   "repository": {
     "type": "git",
