@@ -45,7 +45,8 @@ Arguments:
 
 - `modules` &lt;string[]> An optional array of module names to limit which modules
   trigger a call of the `onrequire` callback. If specified, this must be the
-  first argument.
+  first argument. Both regular modules (e.g. `react-dom`) and
+  sub-modules (e.g. `react-dom/server`) can be specified in the array.
 - `options` &lt;Object> An optional object containing fields that change when the
   `onrequire` callback is called. If specified, this must be the second
   argument.
