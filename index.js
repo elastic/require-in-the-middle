@@ -2,11 +2,25 @@
 
 const path = require('path')
 const Module = require('module')
-const resolve = require('resolve')
 const debug = require('debug')('require-in-the-middle')
 const parse = require('module-details-from-path')
 
 module.exports = Hook
+
+// Feature detection: This property was added in Node.js 8.9.0, the same time
+// as the `paths` options argument was added to the `require.resovle` function,
+// which is the one we want
+let resolve
+if (require.resolve.paths) {
+  resolve = function (moduleName, basedir) {
+    return require.resolve(moduleName, { paths: [basedir] })
+  }
+} else {
+  const _resolve = require('resolve')
+  resolve = function (moduleName, basedir) {
+    return _resolve.sync(moduleName, { basedir })
+  }
+}
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
@@ -110,7 +124,7 @@ function Hook (modules, options, onrequire) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
-          res = resolve.sync(moduleName, { basedir: basedir })
+          res = resolve(moduleName, basedir)
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
           return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
