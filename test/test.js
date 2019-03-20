@@ -1,14 +1,14 @@
 'use strict'
 
-var test = require('tape')
-var Hook = require('../')
+const test = require('tape')
+const Hook = require('../')
 
 // The use of deepEqual as opposed to deepStrictEqual in these test is not
 // ideal since it evaluates {} to be equal to [] etc. But if we wanna use tape
 // or assert, this have to do for now.
 
 test('hook.unhook()', function (t) {
-  var hook = Hook(['http'], function (exports, name, basedir) {
+  const hook = Hook(['http'], function (exports, name, basedir) {
     t.fail('should not call onrequire')
   })
   hook.unhook()
@@ -19,9 +19,9 @@ test('hook.unhook()', function (t) {
 test('all modules', function (t) {
   t.plan(8)
 
-  var n = 1
+  let n = 1
 
-  var hook = Hook(function (exports, name, basedir) {
+  const hook = Hook(function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'http')
@@ -42,8 +42,8 @@ test('all modules', function (t) {
     hook.unhook()
   })
 
-  var http = require('http')
-  var net = require('net')
+  const http = require('http')
+  const net = require('net')
 
   t.equal(http.foo, 1)
   t.equal(net.foo, 2)
@@ -56,9 +56,9 @@ test('all modules', function (t) {
 test('whitelisted modules', function (t) {
   t.plan(8)
 
-  var n = 1
+  let n = 1
 
-  var hook = Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
+  const hook = Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'ipp-printer')
@@ -88,9 +88,9 @@ test('whitelisted modules', function (t) {
 })
 
 test('cache', function (t) {
-  var n = 0
+  let n = 0
 
-  var hook = Hook(['child_process'], function (exports, name, basedir) {
+  const hook = Hook(['child_process'], function (exports, name, basedir) {
     exports.foo = ++n
     return exports
   })
@@ -115,9 +115,9 @@ test('cache', function (t) {
 })
 
 test('replacement value', function (t) {
-  var replacement = {}
+  const replacement = {}
 
-  var hook = Hook(['url'], function (exports, name, basedir) {
+  const hook = Hook(['url'], function (exports, name, basedir) {
     return replacement
   })
 
@@ -133,7 +133,7 @@ test('replacement value', function (t) {
 test('circular', function (t) {
   t.plan(2)
 
-  var hook = Hook(['circular'], function (exports, name, basedir) {
+  const hook = Hook(['circular'], function (exports, name, basedir) {
     t.deepEqual(exports, { foo: 1 })
     return exports
   })
@@ -148,13 +148,13 @@ test('circular', function (t) {
 test('mid circular applies to completed module', function (t) {
   t.plan(2)
 
-  var expected = {
+  const expected = {
     foo: 1,
     multiCircular: 4,
     baz: 'buz'
   }
 
-  var hook = Hook(['mid-circular'], function (exports, name, basedir) {
+  const hook = Hook(['mid-circular'], function (exports, name, basedir) {
     t.deepEqual(exports, expected)
     return exports
   })
@@ -169,8 +169,8 @@ test('mid circular applies to completed module', function (t) {
 test('internal', function (t) {
   t.plan(8)
 
-  var loadedModules = []
-  var hook = Hook(['internal'], {
+  const loadedModules = []
+  const hook = Hook(['internal'], {
     internals: true
   }, function (exports, name, basedir) {
     t.true(name.match(/^internal/))
@@ -190,7 +190,7 @@ test('internal', function (t) {
 test('multiple hooks', function (t) {
   t.plan(6)
 
-  var hooks = []
+  const hooks = []
   t.on('end', function () {
     hooks.forEach(function (hook) {
       hook.unhook()
@@ -218,8 +218,8 @@ test('multiple hooks', function (t) {
       return exports
     }))
 
-    var http = require('http')
-    var net = require('net')
+    const http = require('http')
+    const net = require('net')
 
     t.equal(http.hook1, true)
     t.equal(net.hook2, true)
@@ -231,11 +231,11 @@ test('multiple hooks', function (t) {
 test('multiple hook.unhook()', function (t) {
   t.plan(2)
 
-  var hook1 = Hook(['http'], function (exports, name, basedir) {
+  const hook1 = Hook(['http'], function (exports, name, basedir) {
     t.fail('should not call onrequire')
   })
 
-  var hook2 = Hook(['http'], function (exports, name, basedir) {
+  const hook2 = Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
     exports.hook2 = true
     return exports
@@ -243,7 +243,7 @@ test('multiple hook.unhook()', function (t) {
 
   hook1.unhook()
 
-  var http = require('http')
+  const http = require('http')
   t.equal(http.hook2, true)
 
   hook2.unhook()
