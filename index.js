@@ -2,7 +2,6 @@
 
 const path = require('path')
 const Module = require('module')
-const resolve = require('resolve')
 const debug = require('debug')('require-in-the-middle')
 const moduleDetailsFromPath = require('module-details-from-path')
 
@@ -43,6 +42,21 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
       // the latter is doing version range matches for every call.
       return !!resolve.core[moduleName]
     }
+  }
+}
+
+// Feature detection: This property was added in Node.js 8.9.0, the same time
+// as the `paths` options argument was added to the `require.resolve` function,
+// which is the one we want
+let resolve
+if (require.resolve.paths) {
+  resolve = function (moduleName, basedir) {
+    return require.resolve(moduleName, { paths: [basedir] })
+  }
+} else {
+  const _resolve = require('resolve')
+  resolve = function (moduleName, basedir) {
+    return _resolve.sync(moduleName, { basedir })
   }
 }
 
@@ -281,7 +295,7 @@ function Hook (modules, options, onrequire) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
-          res = resolve.sync(moduleName, { basedir })
+          res = resolve(moduleName, basedir)
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
           self._cache.set(filename, exports, core)
