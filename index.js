@@ -1,15 +1,15 @@
 'use strict'
 
-var path = require('path')
-var Module = require('module')
-var resolve = require('resolve')
-var debug = require('debug')('require-in-the-middle')
-var parse = require('module-details-from-path')
+const path = require('path')
+const Module = require('module')
+const resolve = require('resolve')
+const debug = require('debug')('require-in-the-middle')
+const parse = require('module-details-from-path')
 
 module.exports = Hook
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
-var normalize = /([/\\]index)?(\.js)?$/
+const normalize = /([/\\]index)?(\.js)?$/
 
 function Hook (modules, options, onrequire) {
   if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
@@ -34,8 +34,8 @@ function Hook (modules, options, onrequire) {
   this._unhooked = false
   this._origRequire = Module.prototype.require
 
-  var self = this
-  var patching = {}
+  const self = this
+  const patching = {}
 
   debug('registering require hook')
 
@@ -48,9 +48,9 @@ function Hook (modules, options, onrequire) {
       return self._origRequire.apply(this, arguments)
     }
 
-    var filename = Module._resolveFilename(request, this)
-    var core = filename.indexOf(path.sep) === -1
-    var moduleName, basedir
+    const filename = Module._resolveFilename(request, this)
+    const core = filename.indexOf(path.sep) === -1
+    let moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
 
@@ -62,12 +62,12 @@ function Hook (modules, options, onrequire) {
 
     // Check if this module has a patcher in-progress already.
     // Otherwise, mark this module as patching in-progress.
-    var patched = patching[filename]
+    const patched = patching[filename]
     if (!patched) {
       patching[filename] = true
     }
 
-    var exports = self._origRequire.apply(this, arguments)
+    const exports = self._origRequire.apply(this, arguments)
 
     // If it's already patched, just return it as-is.
     if (patched) {
@@ -86,7 +86,7 @@ function Hook (modules, options, onrequire) {
       }
       moduleName = filename
     } else {
-      var stat = parse(filename)
+      const stat = parse(filename)
       if (!stat) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
@@ -94,7 +94,7 @@ function Hook (modules, options, onrequire) {
       moduleName = stat.name
       basedir = stat.basedir
 
-      var fullModuleName = resolveModuleName(stat)
+      const fullModuleName = resolveModuleName(stat)
 
       debug('resolved filename to module: %s (request: %s, resolved: %s, basedir: %s)', moduleName, request, fullModuleName, basedir)
 
@@ -108,8 +108,9 @@ function Hook (modules, options, onrequire) {
         moduleName = fullModuleName
       } else {
         // figure out if this is the main module file, or a file inside the module
+        let res
         try {
-          var res = resolve.sync(moduleName, { basedir: basedir })
+          res = resolve.sync(moduleName, { basedir: basedir })
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
           return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)

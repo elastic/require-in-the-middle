@@ -1,12 +1,12 @@
 'use strict'
 
-var test = require('tape')
-var Hook = require('../')
+const test = require('tape')
+const Hook = require('../')
 
 test('require(\'sub-module/foo\') => sub-module/foo.js', function (t) {
   t.plan(3)
 
-  var hook = Hook(['sub-module/foo'], function (exports, name, basedir) {
+  const hook = Hook(['sub-module/foo'], function (exports, name, basedir) {
     t.equal(name, 'sub-module/foo')
     return exports
   })
@@ -22,7 +22,7 @@ test('require(\'sub-module/foo\') => sub-module/foo.js', function (t) {
 test('require(\'sub-module/bar\') => sub-module/bar/index.js', function (t) {
   t.plan(3)
 
-  var hook = Hook(['sub-module/bar'], function (exports, name, basedir) {
+  const hook = Hook(['sub-module/bar'], function (exports, name, basedir) {
     t.equal(name, 'sub-module/bar')
     return exports
   })
@@ -38,7 +38,7 @@ test('require(\'sub-module/bar\') => sub-module/bar/index.js', function (t) {
 test('require(\'sub-module/bar/../bar\') => sub-module/bar/index.js', function (t) {
   t.plan(3)
 
-  var hook = Hook(['sub-module/bar'], function (exports, name, basedir) {
+  const hook = Hook(['sub-module/bar'], function (exports, name, basedir) {
     t.equal(name, 'sub-module/bar')
     return exports
   })
@@ -54,7 +54,7 @@ test('require(\'sub-module/bar/../bar\') => sub-module/bar/index.js', function (
 test('require(\'sub-module/conflict\') => sub-module/conflict.js', function (t) {
   t.plan(3)
 
-  var hook = Hook(['sub-module/conflict'], function (exports, name, basedir) {
+  const hook = Hook(['sub-module/conflict'], function (exports, name, basedir) {
     t.equal(name, 'sub-module/conflict')
     return exports
   })
@@ -70,7 +70,7 @@ test('require(\'sub-module/conflict\') => sub-module/conflict.js', function (t) 
 test('require(\'sub-module/conflict/index.js\') => sub-module/conflict/index.js', function (t) {
   t.plan(3)
 
-  var hook = Hook(['sub-module/conflict'], function (exports, name, basedir) {
+  const hook = Hook(['sub-module/conflict'], function (exports, name, basedir) {
     t.equal(name, 'sub-module/conflict')
     return exports
   })
