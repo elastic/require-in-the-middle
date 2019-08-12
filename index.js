@@ -16,10 +16,10 @@ function Hook (modules, options, onrequire) {
   if (typeof modules === 'function') {
     onrequire = modules
     modules = null
-    options = {}
+    options = null
   } else if (typeof options === 'function') {
     onrequire = options
-    options = {}
+    options = null
   }
 
   if (typeof Module._resolveFilename !== 'function') {
@@ -28,14 +28,13 @@ function Hook (modules, options, onrequire) {
     return
   }
 
-  options = options || {}
-
   this.cache = {}
   this._unhooked = false
   this._origRequire = Module.prototype.require
 
   const self = this
   const patching = new Set()
+  const internals = options ? options.internals === true : false
 
   debug('registering require hook')
 
@@ -118,7 +117,7 @@ function Hook (modules, options, onrequire) {
 
         if (res !== filename) {
           // this is a module-internal file
-          if (options.internals) {
+          if (internals === true) {
             // use the module-relative path to the file, prefixed by original module name
             moduleName = moduleName + path.sep + path.relative(basedir, filename)
             debug('preparing to process require of internal file: %s', moduleName)
