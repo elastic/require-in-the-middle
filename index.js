@@ -110,7 +110,7 @@ function Hook (modules, options, onrequire) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
-          res = resolve.sync(moduleName, { basedir: basedir })
+          res = resolve.sync(moduleName, { basedir })
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
           return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
