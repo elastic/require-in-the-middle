@@ -12,7 +12,7 @@ module.exports = Hook
 const normalize = /([/\\]index)?(\.js)?$/
 
 function Hook (modules, options, onrequire) {
-  if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
+  if ((this instanceof Hook) === false) return new Hook(modules, options, onrequire)
   if (typeof modules === 'function') {
     onrequire = modules
     modules = null
@@ -35,11 +35,12 @@ function Hook (modules, options, onrequire) {
   const self = this
   const patching = new Set()
   const internals = options ? options.internals === true : false
+  const hasWhitelist = Array.isArray(modules)
 
   debug('registering require hook')
 
   this._require = Module.prototype.require = function (request) {
-    if (self._unhooked) {
+    if (self._unhooked === true) {
       // if the patched require function could not be removed because
       // someone else patched it after it was patched here, we just
       // abort and pass the request onwards to the original require
@@ -51,7 +52,7 @@ function Hook (modules, options, onrequire) {
     const core = filename.indexOf(path.sep) === -1
     let moduleName, basedir
 
-    debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
+    debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', request, filename)
 
     // return known patched modules immediately
     if (Object.prototype.hasOwnProperty.call(self.cache, filename) === true) {
@@ -78,15 +79,15 @@ function Hook (modules, options, onrequire) {
     // so the patching mark can be cleaned up.
     patching.delete(filename)
 
-    if (core) {
-      if (modules && modules.indexOf(filename) === -1) {
+    if (core === true) {
+      if (hasWhitelist === true && modules.indexOf(filename) === -1) {
         debug('ignoring core module not on whitelist: %s', filename)
         return exports // abort if module name isn't on whitelist
       }
       moduleName = filename
     } else {
       const stat = parse(filename)
-      if (!stat) {
+      if (stat === undefined) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
       }
@@ -100,7 +101,7 @@ function Hook (modules, options, onrequire) {
       // Ex: require('foo/lib/../bar.js')
       // moduleName = 'foo'
       // fullModuleName = 'foo/bar'
-      if (modules && modules.indexOf(moduleName) === -1) {
+      if (hasWhitelist === true && modules.indexOf(moduleName) === -1) {
         if (modules.indexOf(fullModuleName) === -1) return exports // abort if module name isn't on whitelist
 
         // if we get to this point, it means that we're requiring a whitelisted sub-module
