@@ -49,7 +49,7 @@ function Hook (modules, options, onrequire) {
     }
 
     const filename = Module._resolveFilename(request, this)
-    const core = filename.indexOf(path.sep) === -1
+    const core = filename.includes(path.sep) === false
     let moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', request, filename)
@@ -80,7 +80,7 @@ function Hook (modules, options, onrequire) {
     patching.delete(filename)
 
     if (core === true) {
-      if (hasWhitelist === true && modules.indexOf(filename) === -1) {
+      if (hasWhitelist === true && modules.includes(filename) === false) {
         debug('ignoring core module not on whitelist: %s', filename)
         return exports // abort if module name isn't on whitelist
       }
@@ -101,8 +101,8 @@ function Hook (modules, options, onrequire) {
       // Ex: require('foo/lib/../bar.js')
       // moduleName = 'foo'
       // fullModuleName = 'foo/bar'
-      if (hasWhitelist === true && modules.indexOf(moduleName) === -1) {
-        if (modules.indexOf(fullModuleName) === -1) return exports // abort if module name isn't on whitelist
+      if (hasWhitelist === true && modules.includes(moduleName) === false) {
+        if (modules.includes(fullModuleName) === false) return exports // abort if module name isn't on whitelist
 
         // if we get to this point, it means that we're requiring a whitelisted sub-module
         moduleName = fullModuleName
