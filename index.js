@@ -54,7 +54,7 @@ function Hook (modules, options, onrequire) {
     debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
 
     // return known patched modules immediately
-    if (self.cache.hasOwnProperty(filename)) {
+    if (Object.prototype.hasOwnProperty.call(self.cache, filename) === true) {
       debug('returning already patched cached module: %s', filename)
       return self.cache[filename]
     }
@@ -130,7 +130,7 @@ function Hook (modules, options, onrequire) {
     }
 
     // only call onrequire the first time a module is loaded
-    if (!self.cache.hasOwnProperty(filename)) {
+    if (Object.prototype.hasOwnProperty.call(self.cache, filename) === false) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
       self.cache[filename] = exports
