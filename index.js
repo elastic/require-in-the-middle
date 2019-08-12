@@ -35,7 +35,7 @@ function Hook (modules, options, onrequire) {
   this._origRequire = Module.prototype.require
 
   const self = this
-  const patching = {}
+  const patching = new Set()
 
   debug('registering require hook')
 
@@ -62,22 +62,22 @@ function Hook (modules, options, onrequire) {
 
     // Check if this module has a patcher in-progress already.
     // Otherwise, mark this module as patching in-progress.
-    const patched = patching[filename]
-    if (!patched) {
-      patching[filename] = true
+    const isPatching = patching.has(filename)
+    if (isPatching === false) {
+      patching.add(filename)
     }
 
     const exports = self._origRequire.apply(this, arguments)
 
     // If it's already patched, just return it as-is.
-    if (patched) {
+    if (isPatching === true) {
       debug('module is in the process of being patched already - ignoring: %s', filename)
       return exports
     }
 
     // The module has already been loaded,
     // so the patching mark can be cleaned up.
-    delete patching[filename]
+    patching.delete(filename)
 
     if (core) {
       if (modules && modules.indexOf(filename) === -1) {
