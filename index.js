@@ -28,7 +28,7 @@ function Hook (modules, options, onrequire) {
     return
   }
 
-  this.cache = {}
+  this.cache = new Map()
   this._unhooked = false
   this._origRequire = Module.prototype.require
 
@@ -55,9 +55,9 @@ function Hook (modules, options, onrequire) {
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', request, filename)
 
     // return known patched modules immediately
-    if (Object.prototype.hasOwnProperty.call(self.cache, filename) === true) {
+    if (self.cache.has(filename) === true) {
       debug('returning already patched cached module: %s', filename)
-      return self.cache[filename]
+      return self.cache.get(filename)
     }
 
     // Check if this module has a patcher in-progress already.
@@ -131,16 +131,16 @@ function Hook (modules, options, onrequire) {
     }
 
     // only call onrequire the first time a module is loaded
-    if (Object.prototype.hasOwnProperty.call(self.cache, filename) === false) {
+    if (self.cache.has(filename) === false) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
-      self.cache[filename] = exports
+      self.cache.set(filename, exports)
       debug('calling require hook: %s', moduleName)
-      self.cache[filename] = onrequire(exports, moduleName, basedir)
+      self.cache.set(filename, onrequire(exports, moduleName, basedir))
     }
 
     debug('returning module: %s', moduleName)
-    return self.cache[filename]
+    return self.cache.get(filename)
   }
 }
 
