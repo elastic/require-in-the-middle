@@ -1,6 +1,7 @@
 'use strict'
 
 const test = require('tape')
+const semver = require('semver')
 const Hook = require('../')
 
 // The use of deepEqual as opposed to deepStrictEqual in these test is not
@@ -249,3 +250,29 @@ test('multiple hook.unhook()', function (t) {
   hook2.unhook()
   t.end()
 })
+
+if (semver.lt(process.version, '12.0.0')) {
+  test('builtin core module with slash', function (t) {
+    t.plan(5)
+
+    const name = 'v8/tools/splaytree'
+    let n = 1
+
+    const hook = Hook(function (exports, _name, basedir) {
+      t.equal(_name, name)
+      exports.foo = n++
+      return exports
+    })
+
+    t.on('end', function () {
+      hook.unhook()
+    })
+
+    const exports = require(name)
+
+    t.equal(exports.foo, 1)
+    t.equal(require(name).foo, 1)
+    t.deepEqual(hook.cache.get(name), exports)
+    t.equal(n, 2)
+  })
+}

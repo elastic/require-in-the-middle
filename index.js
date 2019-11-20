@@ -8,6 +8,8 @@ const parse = require('module-details-from-path')
 
 module.exports = Hook
 
+const builtins = Module.builtinModules
+
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
 
@@ -49,7 +51,7 @@ function Hook (modules, options, onrequire) {
     }
 
     const filename = Module._resolveFilename(id, this)
-    const core = filename.includes(path.sep) === false
+    const core = builtins.includes(filename)
     let moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
