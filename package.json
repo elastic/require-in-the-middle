@@ -12,6 +12,7 @@
     "ipp-printer": "^1.0.0",
     "patterns": "^1.0.3",
     "roundround": "^0.2.0",
+    "semver": "^6.3.0",
     "standard": "^14.3.1",
     "tape": "^4.11.0"
   },
