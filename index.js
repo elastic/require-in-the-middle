@@ -41,7 +41,7 @@ function Hook (modules, options, onrequire) {
 
   debug('registering require hook')
 
-  this._require = Module.prototype.require = function (request) {
+  this._require = Module.prototype.require = function (id) {
     if (self._unhooked === true) {
       // if the patched require function could not be removed because
       // someone else patched it after it was patched here, we just
@@ -50,11 +50,11 @@ function Hook (modules, options, onrequire) {
       return self._origRequire.apply(this, arguments)
     }
 
-    const filename = Module._resolveFilename(request, this)
+    const filename = Module._resolveFilename(id, this)
     const core = builtins.includes(filename)
     let moduleName, basedir
 
-    debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', request, filename)
+    debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
     // return known patched modules immediately
     if (self.cache.has(filename) === true) {
@@ -98,7 +98,7 @@ function Hook (modules, options, onrequire) {
 
       const fullModuleName = resolveModuleName(stat)
 
-      debug('resolved filename to module: %s (request: %s, resolved: %s, basedir: %s)', moduleName, request, fullModuleName, basedir)
+      debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
       // Ex: require('foo/lib/../bar.js')
       // moduleName = 'foo'
