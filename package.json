@@ -1,6 +1,6 @@
 {
   "name": "require-in-the-middle",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
   "dependencies": {
@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/elastic/require-in-the-middle#readme",
   "coordinates": [
-    55.778265,
-    12.593155
+    55.776587,
+    12.592619
   ]
 }
