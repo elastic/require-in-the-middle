@@ -48,8 +48,8 @@ test('all modules', function (t) {
   t.equal(http.foo, 1)
   t.equal(net.foo, 2)
   t.equal(require('http').foo, 1)
-  t.deepEqual(hook.cache['http'], http)
-  t.deepEqual(hook.cache['net'], net)
+  t.deepEqual(hook.cache.get('http'), http)
+  t.deepEqual(hook.cache.get('net'), net)
   t.equal(n, 3)
 })
 
@@ -99,17 +99,17 @@ test('cache', function (t) {
     hook.unhook()
   })
 
-  t.deepEqual(hook.cache, {})
+  t.deepEqual(Array.from(hook.cache.keys()), [])
   t.equal(require('child_process').foo, 1)
 
-  t.deepEqual(Object.keys(hook.cache), ['child_process'])
+  t.deepEqual(Array.from(hook.cache.keys()), ['child_process'])
   t.equal(require('child_process').foo, 1)
 
-  delete hook.cache['child_process']
-  t.deepEqual(hook.cache, {})
+  hook.cache.delete('child_process')
+  t.deepEqual(Array.from(hook.cache.keys()), [])
 
   t.equal(require('child_process').foo, 2)
-  t.deepEqual(Object.keys(hook.cache), ['child_process'])
+  t.deepEqual(Array.from(hook.cache.keys()), ['child_process'])
 
   t.end()
 })

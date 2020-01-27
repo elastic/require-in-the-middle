@@ -26,14 +26,14 @@ if (require.resolve.paths) {
 const normalize = /([/\\]index)?(\.js)?$/
 
 function Hook (modules, options, onrequire) {
-  if (!(this instanceof Hook)) return new Hook(modules, options, onrequire)
+  if ((this instanceof Hook) === false) return new Hook(modules, options, onrequire)
   if (typeof modules === 'function') {
     onrequire = modules
     modules = null
-    options = {}
+    options = null
   } else if (typeof options === 'function') {
     onrequire = options
-    options = {}
+    options = null
   }
 
   if (typeof Module._resolveFilename !== 'function') {
@@ -42,19 +42,19 @@ function Hook (modules, options, onrequire) {
     return
   }
 
-  options = options || {}
-
-  this.cache = {}
+  this.cache = new Map()
   this._unhooked = false
   this._origRequire = Module.prototype.require
 
   const self = this
-  const patching = {}
+  const patching = new Set()
+  const internals = options ? options.internals === true : false
+  const hasWhitelist = Array.isArray(modules)
 
   debug('registering require hook')
 
-  this._require = Module.prototype.require = function (request) {
-    if (self._unhooked) {
+  this._require = Module.prototype.require = function (id) {
+    if (self._unhooked === true) {
       // if the patched require function could not be removed because
       // someone else patched it after it was patched here, we just
       // abort and pass the request onwards to the original require
@@ -62,46 +62,46 @@ function Hook (modules, options, onrequire) {
       return self._origRequire.apply(this, arguments)
     }
 
-    const filename = Module._resolveFilename(request, this)
-    const core = filename.indexOf(path.sep) === -1
+    const filename = Module._resolveFilename(id, this)
+    const core = filename.includes(path.sep) === false
     let moduleName, basedir
 
-    debug('processing %s module require(\'%s\'): %s', core ? 'core' : 'non-core', request, filename)
+    debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
     // return known patched modules immediately
-    if (self.cache.hasOwnProperty(filename)) {
+    if (self.cache.has(filename) === true) {
       debug('returning already patched cached module: %s', filename)
-      return self.cache[filename]
+      return self.cache.get(filename)
     }
 
     // Check if this module has a patcher in-progress already.
     // Otherwise, mark this module as patching in-progress.
-    const patched = patching[filename]
-    if (!patched) {
-      patching[filename] = true
+    const isPatching = patching.has(filename)
+    if (isPatching === false) {
+      patching.add(filename)
     }
 
     const exports = self._origRequire.apply(this, arguments)
 
     // If it's already patched, just return it as-is.
-    if (patched) {
+    if (isPatching === true) {
       debug('module is in the process of being patched already - ignoring: %s', filename)
       return exports
     }
 
     // The module has already been loaded,
     // so the patching mark can be cleaned up.
-    delete patching[filename]
+    patching.delete(filename)
 
-    if (core) {
-      if (modules && modules.indexOf(filename) === -1) {
+    if (core === true) {
+      if (hasWhitelist === true && modules.includes(filename) === false) {
         debug('ignoring core module not on whitelist: %s', filename)
         return exports // abort if module name isn't on whitelist
       }
       moduleName = filename
     } else {
       const stat = parse(filename)
-      if (!stat) {
+      if (stat === undefined) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
       }
@@ -110,13 +110,13 @@ function Hook (modules, options, onrequire) {
 
       const fullModuleName = resolveModuleName(stat)
 
-      debug('resolved filename to module: %s (request: %s, resolved: %s, basedir: %s)', moduleName, request, fullModuleName, basedir)
+      debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
       // Ex: require('foo/lib/../bar.js')
       // moduleName = 'foo'
       // fullModuleName = 'foo/bar'
-      if (modules && modules.indexOf(moduleName) === -1) {
-        if (modules.indexOf(fullModuleName) === -1) return exports // abort if module name isn't on whitelist
+      if (hasWhitelist === true && modules.includes(moduleName) === false) {
+        if (modules.includes(fullModuleName) === false) return exports // abort if module name isn't on whitelist
 
         // if we get to this point, it means that we're requiring a whitelisted sub-module
         moduleName = fullModuleName
@@ -132,7 +132,7 @@ function Hook (modules, options, onrequire) {
 
         if (res !== filename) {
           // this is a module-internal file
-          if (options.internals) {
+          if (internals === true) {
             // use the module-relative path to the file, prefixed by original module name
             moduleName = moduleName + path.sep + path.relative(basedir, filename)
             debug('preparing to process require of internal file: %s', moduleName)
@@ -145,16 +145,16 @@ function Hook (modules, options, onrequire) {
     }
 
     // only call onrequire the first time a module is loaded
-    if (!self.cache.hasOwnProperty(filename)) {
+    if (self.cache.has(filename) === false) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
-      self.cache[filename] = exports
+      self.cache.set(filename, exports)
       debug('calling require hook: %s', moduleName)
-      self.cache[filename] = onrequire(exports, moduleName, basedir)
+      self.cache.set(filename, onrequire(exports, moduleName, basedir))
     }
 
     debug('returning module: %s', moduleName)
-    return self.cache[filename]
+    return self.cache.get(filename)
   }
 }
 
