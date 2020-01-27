@@ -8,6 +8,16 @@ const parse = require('module-details-from-path')
 
 module.exports = Hook
 
+const builtins = Module.builtinModules
+
+const isCore = builtins
+  ? (filename) => builtins.includes(filename)
+  // Fallback in case `builtins` isn't available in the current Node.js
+  // version. This isn't as acurate, as some core modules contain slashes, but
+  // all modern versions of Node.js supports `buildins`, so it shouldn't affect
+  // many people.
+  : (filename) => filename.includes(path.sep) === false
+
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
 
@@ -49,7 +59,7 @@ function Hook (modules, options, onrequire) {
     }
 
     const filename = Module._resolveFilename(id, this)
-    const core = filename.includes(path.sep) === false
+    const core = isCore(filename)
     let moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
