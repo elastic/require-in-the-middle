@@ -8,10 +8,10 @@ const parse = require('module-details-from-path')
 
 module.exports = Hook
 
-const builtins = Module.builtinModules
+const builtins = Module.builtinModules && new Set(Module.builtinModules)
 
 const isCore = builtins
-  ? (filename) => builtins.includes(filename)
+  ? (filename) => builtins.has(filename)
   // Fallback in case `builtins` isn't available in the current Node.js
   // version. This isn't as acurate, as some core modules contain slashes, but
   // all modern versions of Node.js supports `buildins`, so it shouldn't affect
