@@ -3,6 +3,7 @@
 const test = require('tape')
 const semver = require('semver')
 const Module = require('module')
+const path = require('path')
 const Hook = require('../')
 
 // The use of deepEqual as opposed to deepStrictEqual in these test is not
@@ -249,6 +250,38 @@ test('multiple hook.unhook()', function (t) {
   t.equal(http.hook2, true)
 
   hook2.unhook()
+  t.end()
+})
+
+test('absolute file paths', function (t) {
+  t.plan(6)
+
+  const absolutePath = path.join(__dirname, 'absolute', 'absolute-file')
+
+  const hook1 = Hook([absolutePath], function (exports, name, basedir) {
+    t.equal(name, 'absolute-file')
+    t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
+    exports.hook1 = true
+    return exports
+  })
+
+  const absoluteModule1 = require(absolutePath)
+  t.equal(absoluteModule1.hook1, true)
+
+  hook1.unhook()
+
+  const hook2 = Hook([absolutePath + '.js'], function (exports, name, basedir) {
+    t.equal(name, 'absolute-file')
+    t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
+    exports.hook2 = true
+    return exports
+  })
+
+  const absoluteModule2 = require(absolutePath)
+  t.equal(absoluteModule2.hook2, true)
+
+  hook2.unhook()
+
   t.end()
 })
 

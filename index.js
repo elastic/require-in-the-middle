@@ -60,7 +60,7 @@ function Hook (modules, options, onrequire) {
 
     const filename = Module._resolveFilename(id, this)
     const core = isCore(filename)
-    let moduleName, basedir
+    let moduleName, basedir, absoluteRequire
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
@@ -96,10 +96,25 @@ function Hook (modules, options, onrequire) {
       }
       moduleName = filename
     } else {
-      const stat = parse(filename)
+      let stat = parse(filename)
       if (stat === undefined) {
-        debug('could not parse filename: %s', filename)
-        return exports // abort if filename could not be parsed
+        if (path.isAbsolute(filename) && hasWhitelist === true) {
+          const parsedPath = path.parse(filename)
+          if (modules.includes(filename) || modules.includes(path.join(parsedPath.root, parsedPath.dir, parsedPath.name))) {
+            stat = {
+              name: parsedPath.name,
+              basedir: parsedPath.dir,
+              path: path.join(parsedPath.dir, parsedPath.base)
+            }
+            absoluteRequire = true
+          } else {
+            debug('ignoring absolute module not on whitelist: %s', filename)
+            return exports
+          }
+        } else {
+          debug('could not parse filename: %s', filename)
+          return exports // abort if filename could not be parsed
+        }
       }
       moduleName = stat.name
       basedir = stat.basedir
@@ -108,33 +123,35 @@ function Hook (modules, options, onrequire) {
 
       debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
-      // Ex: require('foo/lib/../bar.js')
-      // moduleName = 'foo'
-      // fullModuleName = 'foo/bar'
-      if (hasWhitelist === true && modules.includes(moduleName) === false) {
-        if (modules.includes(fullModuleName) === false) return exports // abort if module name isn't on whitelist
+      if (!absoluteRequire) {
+        // Ex: require('foo/lib/../bar.js')
+        // moduleName = 'foo'
+        // fullModuleName = 'foo/bar'
+        if (hasWhitelist === true && modules.includes(moduleName) === false) {
+          if (modules.includes(fullModuleName) === false) return exports // abort if module name isn't on whitelist
 
-        // if we get to this point, it means that we're requiring a whitelisted sub-module
-        moduleName = fullModuleName
-      } else {
-        // figure out if this is the main module file, or a file inside the module
-        let res
-        try {
-          res = resolve.sync(moduleName, { basedir })
-        } catch (e) {
-          debug('could not resolve module: %s', moduleName)
-          return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
-        }
+          // if we get to this point, it means that we're requiring a whitelisted sub-module
+          moduleName = fullModuleName
+        } else {
+          // figure out if this is the main module file, or a file inside the module
+          let res
+          try {
+            res = resolve.sync(moduleName, { basedir })
+          } catch (e) {
+            debug('could not resolve module: %s', moduleName)
+            return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
+          }
 
-        if (res !== filename) {
-          // this is a module-internal file
-          if (internals === true) {
-            // use the module-relative path to the file, prefixed by original module name
-            moduleName = moduleName + path.sep + path.relative(basedir, filename)
-            debug('preparing to process require of internal file: %s', moduleName)
-          } else {
-            debug('ignoring require of non-main module file: %s', res)
-            return exports // abort if not main module file
+          if (res !== filename) {
+            // this is a module-internal file
+            if (internals === true) {
+              // use the module-relative path to the file, prefixed by original module name
+              moduleName = moduleName + path.sep + path.relative(basedir, filename)
+              debug('preparing to process require of internal file: %s', moduleName)
+            } else {
+              debug('ignoring require of non-main module file: %s', res)
+              return exports // abort if not main module file
+            }
           }
         }
       }
