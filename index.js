@@ -96,16 +96,13 @@ function Hook (modules, options, onrequire) {
       }
       moduleName = filename
     } else {
-      let stat = parse(filename)
+      const stat = parse(filename)
       if (stat === undefined) {
         if (path.isAbsolute(filename) && hasWhitelist === true) {
           const parsedPath = path.parse(filename)
           if (modules.includes(filename) || modules.includes(path.join(parsedPath.root, parsedPath.dir, parsedPath.name))) {
-            stat = {
-              name: parsedPath.name,
-              basedir: parsedPath.dir,
-              path: path.join(parsedPath.dir, parsedPath.base)
-            }
+            moduleName = parsedPath.name
+            basedir = parsedPath.dir
             absoluteRequire = true
           } else {
             debug('ignoring absolute module not on whitelist: %s', filename)
@@ -116,14 +113,15 @@ function Hook (modules, options, onrequire) {
           return exports // abort if filename could not be parsed
         }
       }
-      moduleName = stat.name
-      basedir = stat.basedir
-
-      const fullModuleName = resolveModuleName(stat)
-
-      debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
       if (!absoluteRequire) {
+        moduleName = stat.name
+        basedir = stat.basedir
+
+        const fullModuleName = resolveModuleName(stat)
+
+        debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
+
         // Ex: require('foo/lib/../bar.js')
         // moduleName = 'foo'
         // fullModuleName = 'foo/bar'
