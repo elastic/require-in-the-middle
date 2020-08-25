@@ -60,7 +60,8 @@ function Hook (modules, options, onrequire) {
 
     const filename = Module._resolveFilename(id, this)
     const core = isCore(filename)
-    let moduleName, basedir, absoluteRequire
+    let moduleName, basedir
+    let absoluteRequire = false
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
