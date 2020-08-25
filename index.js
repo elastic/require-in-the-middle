@@ -101,7 +101,11 @@ function Hook (modules, options, onrequire) {
       if (stat === undefined) {
         if (path.isAbsolute(filename) && hasWhitelist === true) {
           const parsedPath = path.parse(filename)
-          if (modules.includes(filename) || modules.includes(path.join(parsedPath.root, parsedPath.dir, parsedPath.name))) {
+          if (
+            modules.includes(filename) || // whitelist includes /path/to/file.js
+            modules.includes(path.join(parsedPath.dir, parsedPath.name)) || // whitelist includes /path/to/file
+            (parsedPath.base === 'index.js' && modules.includes(parsedPath.dir)) // whitelist includes path to directory containing index.js
+          ) {
             moduleName = parsedPath.name
             basedir = parsedPath.dir
             absoluteRequire = true

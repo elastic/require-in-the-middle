@@ -285,6 +285,26 @@ test('absolute file paths', function (t) {
   t.end()
 })
 
+test('absolute directory paths containing index', function (t) {
+  t.plan(3)
+
+  const absolutePath = path.join(__dirname, 'absolute')
+
+  const hook1 = Hook([absolutePath], function (exports, name, basedir) {
+    t.equal(name, 'index')
+    t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
+    exports.hook1 = true
+    return exports
+  })
+
+  const absoluteModule1 = require(absolutePath)
+  t.equal(absoluteModule1.hook1, true)
+
+  hook1.unhook()
+
+  t.end()
+})
+
 if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
   test('builtin core module with slash', function (t) {
     t.plan(5)
