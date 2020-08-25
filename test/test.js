@@ -285,10 +285,11 @@ test('absolute file paths', function (t) {
   t.end()
 })
 
-test('absolute directory paths containing index', function (t) {
-  t.plan(3)
+test('absolute index file paths', function (t) {
+  t.plan(6)
 
-  const absolutePath = path.join(__dirname, 'absolute')
+  const absolutePath = path.join(__dirname, 'absolute', 'index')
+  const absolutePathWithoutIndex = path.join(__dirname, 'absolute')
 
   const hook1 = Hook([absolutePath], function (exports, name, basedir) {
     t.equal(name, 'index')
@@ -297,10 +298,42 @@ test('absolute directory paths containing index', function (t) {
     return exports
   })
 
-  const absoluteModule1 = require(absolutePath)
+  const absoluteModule1 = require(absolutePathWithoutIndex)
   t.equal(absoluteModule1.hook1, true)
 
   hook1.unhook()
+
+  const hook2 = Hook([absolutePath + '.js'], function (exports, name, basedir) {
+    t.equal(name, 'index')
+    t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
+    exports.hook2 = true
+    return exports
+  })
+
+  const absoluteModule2 = require(absolutePathWithoutIndex)
+  t.equal(absoluteModule2.hook2, true)
+
+  hook2.unhook()
+
+  t.end()
+})
+
+test('absolute directory paths containing index', function (t) {
+  t.plan(3)
+
+  const absolutePath = path.join(__dirname, 'absolute')
+
+  const hook3 = Hook([absolutePath], function (exports, name, basedir) {
+    t.equal(name, 'index')
+    t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
+    exports.hook3 = true
+    return exports
+  })
+
+  const absoluteModule1 = require(absolutePath)
+  t.equal(absoluteModule1.hook3, true)
+
+  hook3.unhook()
 
   t.end()
 })
