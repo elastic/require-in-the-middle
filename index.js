@@ -99,20 +99,11 @@ function Hook (modules, options, onrequire) {
     } else {
       const stat = parse(filename)
       if (stat === undefined) {
-        if (path.isAbsolute(filename) && hasWhitelist === true) {
+        if (hasWhitelist === true && modules.includes(filename)) {
           const parsedPath = path.parse(filename)
-          if (
-            modules.includes(filename) || // whitelist includes /path/to/file.js
-            modules.includes(path.join(parsedPath.dir, parsedPath.name)) || // whitelist includes /path/to/file
-            (parsedPath.base === 'index.js' && modules.includes(parsedPath.dir)) // whitelist includes path to directory containing index.js
-          ) {
-            moduleName = parsedPath.name
-            basedir = parsedPath.dir
-            absoluteRequire = true
-          } else {
-            debug('ignoring absolute module not on whitelist: %s', filename)
-            return exports
-          }
+          moduleName = parsedPath.name
+          basedir = parsedPath.dir
+          absoluteRequire = true
         } else {
           debug('could not parse filename: %s', filename)
           return exports // abort if filename could not be parsed
