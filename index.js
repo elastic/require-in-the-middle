@@ -95,6 +95,11 @@ function Hook (modules, options, onrequire) {
         return exports // abort if module name isn't on whitelist
       }
       moduleName = filename
+    } else if (hasWhitelist === true && modules.includes(filename)) {
+      // whitelist includes the absolute path to the file including extension
+      const parsedPath = path.parse(filename)
+      moduleName = parsedPath.name
+      basedir = parsedPath.dir
     } else {
       const stat = parse(filename)
       if (stat === undefined) {
