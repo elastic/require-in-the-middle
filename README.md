@@ -4,8 +4,8 @@ Hook into the Node.js `require` function. This allows you to modify
 modules on-the-fly as they are being required.
 
 [![npm](https://img.shields.io/npm/v/require-in-the-middle.svg)](https://www.npmjs.com/package/require-in-the-middle)
-[![Build status](https://travis-ci.org/elastic/require-in-the-middle.svg?branch=master)](https://travis-ci.org/elastic/require-in-the-middle)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
+[![Test status](https://github.com/elastic/require-in-the-middle/workflows/Test/badge.svg)](https://github.com/elastic/require-in-the-middle/actions)
+
 
 ## Installation
 
