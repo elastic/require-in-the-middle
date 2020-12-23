@@ -48,6 +48,9 @@
     "url": "https://github.com/elastic/require-in-the-middle/issues"
   },
   "homepage": "https://github.com/elastic/require-in-the-middle#readme",
+  "engines": {
+    "node": ">=6"
+  },
   "coordinates": [
     56.009779,
     11.962099
