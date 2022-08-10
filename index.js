@@ -8,15 +8,22 @@ const parse = require('module-details-from-path')
 
 module.exports = Hook
 
-const builtins = Module.builtinModules
-
-const isCore = builtins
-  ? (filename) => builtins.includes(filename)
-  // Fallback in case `builtins` isn't available in the current Node.js
-  // version. This isn't as acurate, as some core modules contain slashes, but
-  // all modern versions of Node.js supports `buildins`, so it shouldn't affect
-  // many people.
-  : (filename) => filename.includes(path.sep) === false
+/**
+ * Is the given module a "core" module?
+ * https://nodejs.org/api/modules.html#core-modules
+ *
+ * @type {(moduleName: string) => boolean}
+ */
+let isCore
+if (Module.isBuiltin) { // as of node v18.6.0
+  isCore = Module.isBuiltin
+} else {
+  isCore = moduleName => {
+    // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because the
+    // latter is doing version range matches for every call.
+    return !!resolve.core[moduleName]
+  }
+}
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
@@ -58,8 +65,22 @@ function Hook (modules, options, onrequire) {
       return self._origRequire.apply(this, arguments)
     }
 
-    const filename = Module._resolveFilename(id, this)
-    const core = isCore(filename)
+    const core = isCore(id)
+    let filename // the string used for caching
+    if (core) {
+      filename = id
+      // If this is a builtin module that can be identified both as 'foo' and
+      // 'node:foo', then prefer 'foo' as the caching key.
+      if (id.startsWith('node:')) {
+        const idWithoutPrefix = id.slice(5)
+        if (isCore(idWithoutPrefix)) {
+          filename = idWithoutPrefix
+        }
+      }
+    } else {
+      filename = Module._resolveFilename(id, this)
+    }
+
     let moduleName, basedir
 
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)

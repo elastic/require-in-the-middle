@@ -311,3 +311,66 @@ if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
     t.equal(n, 2)
   })
 }
+
+if (semver.satisfies(process.version, '>=14.18.0')) {
+  // https://nodejs.org/api/modules.html#core-modules
+  test('"node:"-prefixed builtin modules', function (t) {
+    let n = 0
+
+    const hook = Hook(['perf_hooks'], function (exports, name, basedir) {
+      exports.foo = ++n
+      return exports
+    })
+
+    t.on('end', function () {
+      hook.unhook()
+    })
+
+    t.deepEqual(Array.from(hook.cache.keys()), [])
+    const prefixedMod = require('node:perf_hooks')
+    t.equal(prefixedMod.foo, 1)
+
+    t.deepEqual(Array.from(hook.cache.keys()), ['perf_hooks'])
+    const unprefixedMod = require('perf_hooks')
+    t.equal(unprefixedMod.foo, 1)
+    t.strictEqual(prefixedMod, unprefixedMod, 'modules are the same')
+
+    hook.cache.delete('perf_hooks')
+    t.deepEqual(Array.from(hook.cache.keys()), [])
+
+    t.equal(require('perf_hooks').foo, 2)
+    t.deepEqual(Array.from(hook.cache.keys()), ['perf_hooks'])
+
+    t.end()
+  })
+}
+
+if (semver.satisfies(process.version, '>=18.0.0')) {
+  // For exampe 'node:test' is a core module, 'test' is not.
+  test('"node:"-only core modules', function (t) {
+    t.plan(4)
+
+    let n = 0
+
+    const hook = Hook(['node:test'], function (exports, name, basedir) {
+      exports.foo = ++n
+      return exports
+    })
+
+    t.on('end', function () {
+      hook.unhook()
+    })
+
+    t.deepEqual(Array.from(hook.cache.keys()), [])
+    t.equal(require('node:test').foo, 1)
+    t.deepEqual(Array.from(hook.cache.keys()), ['node:test'])
+
+    try {
+      require('test')
+    } catch (err) {
+      t.ok(err, 'no "test" module exists')
+    }
+
+    t.end()
+  })
+}
