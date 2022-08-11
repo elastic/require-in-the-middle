@@ -1,6 +1,6 @@
 {
   "name": "require-in-the-middle",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
   "dependencies": {
@@ -42,6 +42,7 @@
     "module",
     "load"
   ],
+  "files": [],
   "author": "Thomas Watson Steen <w@tson.dk> (https://twitter.com/wa7son)",
   "license": "MIT",
   "bugs": {
@@ -50,9 +51,5 @@
   "homepage": "https://github.com/elastic/require-in-the-middle#readme",
   "engines": {
     "node": ">=6"
-  },
-  "coordinates": [
-    56.009779,
-    11.962099
-  ]
+  }
 }
