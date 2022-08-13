@@ -3,8 +3,8 @@
 const path = require('path')
 const Module = require('module')
 const resolve = require('resolve')
+const fs = require('fs')
 const debug = require('debug')('require-in-the-middle')
-const parse = require('module-details-from-path')
 
 module.exports = Hook
 
@@ -27,6 +27,39 @@ if (Module.isBuiltin) { // as of node v18.6.0
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
+
+function parseModuleDetails (file) {
+  var segments = file.split(path.sep)
+  var index = segments.lastIndexOf('node_modules')
+  if (index === -1) {
+    // in case file path in fot from node_modules, find closest directory which has node_modules and use it as module
+    const dirWithNmIndex = segments.slice().reverse().findIndex((item, index) => {
+      if (index === 0) {
+        return false
+      }
+      const nodeModulesPath = [...segments.slice(0, -index), 'node_modules'].join(path.sep)
+      return fs.existsSync(nodeModulesPath)
+    })
+    if (dirWithNmIndex > -1) {
+      return {
+        name: segments[segments.length - dirWithNmIndex - 1],
+        basedir: segments.slice(0, -dirWithNmIndex).join(path.sep),
+        path: segments.slice(segments.length - dirWithNmIndex - 1 + 1).join(path.sep)
+      }
+    } else {
+      return false
+    }
+  }
+  if (!segments[index + 1]) return
+  var scoped = segments[index + 1][0] === '@'
+  var name = scoped ? segments[index + 1] + '/' + segments[index + 2] : segments[index + 1]
+  var offset = scoped ? 3 : 2
+  return {
+    name: name,
+    basedir: segments.slice(0, index + offset).join(path.sep),
+    path: segments.slice(index + offset).join(path.sep)
+  }
+}
 
 function Hook (modules, options, onrequire) {
   if ((this instanceof Hook) === false) return new Hook(modules, options, onrequire)
@@ -122,7 +155,7 @@ function Hook (modules, options, onrequire) {
       moduleName = parsedPath.name
       basedir = parsedPath.dir
     } else {
-      const stat = parse(filename)
+      const stat = parseModuleDetails(filename)
       if (stat === undefined) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
@@ -148,8 +181,14 @@ function Hook (modules, options, onrequire) {
         try {
           res = resolve.sync(moduleName, { basedir })
         } catch (e) {
-          debug('could not resolve module: %s', moduleName)
-          return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
+          const fullName = basedir
+          // module is not part of node_modules, but it is local import
+          if (fs.existsSync(fullName)) {
+            res = fullName
+          } else {
+            debug('could not resolve module: %s', moduleName)
+            return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
+          }
         }
 
         if (res !== filename) {
