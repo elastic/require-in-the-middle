@@ -86,7 +86,8 @@ function Hook (modules, options, onrequire) {
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
     // return known patched modules immediately
-    if (self.cache.has(filename) === true) {
+    const customModuleRemovedFromOriginCache = !core && typeof require.cache[require.resolve(filename)] === 'undefined'
+    if (self.cache.has(filename) === true && customModuleRemovedFromOriginCache === false) {
       debug('returning already patched cached module: %s', filename)
       return self.cache.get(filename)
     }
@@ -167,7 +168,7 @@ function Hook (modules, options, onrequire) {
     }
 
     // only call onrequire the first time a module is loaded
-    if (self.cache.has(filename) === false) {
+    if (self.cache.has(filename) === false || customModuleRemovedFromOriginCache === true) {
       // ensure that the cache entry is assigned a value before calling
       // onrequire, in case calling onrequire requires the same module.
       self.cache.set(filename, exports)

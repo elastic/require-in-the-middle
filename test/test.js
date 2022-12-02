@@ -117,6 +117,50 @@ test('cache', function (t) {
   t.end()
 })
 
+test('removed custom module from origin require cache', function (t) {
+  let n = 0
+
+  const hook = Hook(['standard'], function (exports, name, basedir) {
+    exports.foo = ++n
+    return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
+  })
+
+  t.equal(require('standard').foo, 1)
+  t.equal(require('standard').foo, 1)
+
+  delete require.cache[require.resolve('standard')]
+
+  t.equal(require('standard').foo, 2)
+
+  t.end()
+})
+
+test('removed core module from origin require cache', function (t) {
+  let n = 0
+
+  const hook = Hook(['child_process'], function (exports, name, basedir) {
+    exports.foo = ++n
+    return exports
+  })
+
+  t.on('end', function () {
+    hook.unhook()
+  })
+
+  t.equal(require('child_process').foo, 1)
+  t.equal(require('child_process').foo, 1)
+
+  delete require.cache[require.resolve('child_process')]
+
+  t.equal(require('child_process').foo, 1)
+
+  t.end()
+})
+
 test('replacement value', function (t) {
   const replacement = {}
 
