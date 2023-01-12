@@ -2,7 +2,9 @@
 
 ## v6.0.0
 
-- Drop node v6 support.
+- Drop node v6 support. New minimum supported node version is v8.6.0.
+  (This is the min support node version for elastic-apm-node@3 that uses
+  this module.)
 - Add testing of node v19.
 - Rename default branch from "master" to "main".
 - Should there be a need to do 5.x maintenance releases there is a

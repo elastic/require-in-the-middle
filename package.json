@@ -50,6 +50,6 @@
   },
   "homepage": "https://github.com/elastic/require-in-the-middle#readme",
   "engines": {
-    "node": ">=6"
+    "node": ">=8.6.0"
   }
 }
