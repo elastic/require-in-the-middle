@@ -15,7 +15,7 @@ module.exports = Hook
  * @type {(moduleName: string) => boolean}
  */
 let isCore
-if (Module.isBuiltin) { // as of node v18.6.0
+if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
   isCore = Module.isBuiltin
 } else {
   isCore = moduleName => {
