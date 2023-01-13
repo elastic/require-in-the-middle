@@ -286,6 +286,36 @@ test('absolute file paths', function (t) {
   t.end()
 })
 
+test('local modules', function (t) {
+  t.plan(6)
+
+  const hook1 = Hook(['test'], { internals: true }, function (exports, name, basedir) {
+    t.equal(name, 'test/local/local-file.js')
+    t.equal(basedir, path.join(process.cwd(), 'test'))
+    exports.hook1 = true
+    return exports
+  })
+
+  const localModule1 = require('./local/local-file')
+  t.equal(localModule1.hook1, true)
+
+  hook1.unhook()
+
+  const hook2 = Hook(['test'], { internals: true }, function (exports, name, basedir) {
+    t.equal(name, 'test/local/local-file.js')
+    t.equal(basedir, path.join(process.cwd(), 'test'))
+    exports.hook2 = true
+    return exports
+  })
+
+  const localModule2 = require('./local/local-file')
+  t.equal(localModule2.hook2, true)
+
+  hook2.unhook()
+
+  t.end()
+})
+
 if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
   test('builtin core module with slash', function (t) {
     t.plan(5)
