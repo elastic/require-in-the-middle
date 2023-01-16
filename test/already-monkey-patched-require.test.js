@@ -28,12 +28,18 @@ test('already monkey-patched require', function (t) {
     exports.foo = 1
     return exports
   })
-  t.equal(require('http').foo, 1)
+  t.equal(require('http').foo, 1, 'normal hooking still works')
 
   const fnCore = require('@azure/functions-core')
-  t.ok(fnCore)
+  t.ok(fnCore, 'requiring monkey-patched-in module works')
   t.equal(fnCore.version, '1.0.0')
   t.equal(typeof fnCore.registerHook, 'function')
+
+  t.throws(
+    () => require('this-package-does-not-exist'),
+    { code: 'MODULE_NOT_FOUND' },
+    'a failing `require(...)` can still throw as expected'
+  )
 
   hook.unhook()
   t.end()
