@@ -136,7 +136,7 @@ function Hook (modules, options, onrequire) {
       basedir = parsedPath.dir
     } else {
       const stat = moduleDetailsFromPath(filename)
-      if (!stat) {
+      if (stat === undefined) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
       }
