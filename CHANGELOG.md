@@ -1,5 +1,12 @@
 # require-in-the-middle changelog
 
+## Unreleased
+
+- If resolving the filename for a `require(...)` fails, defer to the wrapped
+  require implementation rather than failing right away. This allows a
+  possibly-monkey-patched `require` to do its own special thing.
+  https://github.com/elastic/require-in-the-middle/pull/59
+
 ## v6.0.0
 
 - Drop Node.js 6 support. New minimum supported Node.js version is 8.6.0.

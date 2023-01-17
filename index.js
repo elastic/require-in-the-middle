@@ -4,7 +4,7 @@ const path = require('path')
 const Module = require('module')
 const resolve = require('resolve')
 const debug = require('debug')('require-in-the-middle')
-const parse = require('module-details-from-path')
+const moduleDetailsFromPath = require('module-details-from-path')
 
 module.exports = Hook
 
@@ -78,7 +78,20 @@ function Hook (modules, options, onrequire) {
         }
       }
     } else {
-      filename = Module._resolveFilename(id, this)
+      try {
+        filename = Module._resolveFilename(id, this)
+      } catch (resolveErr) {
+        // If someone *else* monkey-patches before this monkey-patch, then that
+        // code might expect `require(someId)` to get through so it can be
+        // handled, even if `someId` cannot be resolved to a filename. In this
+        // case, instead of throwing we defer to the underlying `require`.
+        //
+        // For example the Azure Functions Node.js worker module does this,
+        // where `@azure/functions-core` resolves to an internal object.
+        // https://github.com/Azure/azure-functions-nodejs-worker/blob/v3.5.2/src/setupCoreModule.ts#L46-L54
+        debug('Module._resolveFilename("%s") threw %j, calling original Module.require', id, resolveErr.message)
+        return self._origRequire.apply(this, arguments)
+      }
     }
 
     let moduleName, basedir
@@ -122,7 +135,7 @@ function Hook (modules, options, onrequire) {
       moduleName = parsedPath.name
       basedir = parsedPath.dir
     } else {
-      const stat = parse(filename)
+      const stat = moduleDetailsFromPath(filename)
       if (stat === undefined) {
         debug('could not parse filename: %s', filename)
         return exports // abort if filename could not be parsed
