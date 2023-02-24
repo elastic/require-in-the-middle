@@ -51,5 +51,6 @@
   "homepage": "https://github.com/elastic/require-in-the-middle#readme",
   "engines": {
     "node": ">=8.6.0"
-  }
+  },
+  "types": "index.d.ts"
 }
