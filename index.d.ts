@@ -1,5 +1,6 @@
 declare module "require-in-the-middle" {
   interface Hook<TModule> {
+    cache: Map<string, TModule>
     unhook(): void
   }
 
