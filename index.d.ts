@@ -1,18 +1,18 @@
 declare module "require-in-the-middle" {
-  interface Hook {
+  interface Hook<TModule> {
     unhook(): void
   }
 
-  function Hook<Module>(
+  function Hook<TModule>(
     modules: string[],
-    onrequire: (exports: Module, name: string, basedir: string) => Module
-  ): Hook
+    onrequire: (exports: TModule, name: string, basedir: string) => TModule
+  ): Hook<TModule>
 
-  function Hook<Module>(
+  function Hook<TModule>(
     modules: string[],
     options: { internals: boolean },
-    onrequire: (exports: Module, name: string, basedir: string) => Module
-  ): Hook
+    onrequire: (exports: TModule, name: string, basedir: string) => TModule
+  ): Hook<TModule>
 
   export = Hook
 }
