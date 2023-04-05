@@ -51,8 +51,8 @@ test('all modules', function (t) {
   t.equal(http.foo, 1)
   t.equal(net.foo, 2)
   t.equal(require('http').foo, 1)
-  t.deepEqual(hook.cache.get('http'), http)
-  t.deepEqual(hook.cache.get('net'), net)
+  t.equal(require('http').createServer, http.createServer)
+  t.equal(require('net').connect, net.connect)
   t.equal(n, 3)
 })
 
@@ -88,33 +88,6 @@ test('whitelisted modules', function (t) {
   t.equal(require('ipp-printer').foo, 1)
   t.equal(require('roundround').foo, undefined)
   t.equal(n, 3)
-})
-
-test('cache', function (t) {
-  let n = 0
-
-  const hook = Hook(['child_process'], function (exports, name, basedir) {
-    exports.foo = ++n
-    return exports
-  })
-
-  t.on('end', function () {
-    hook.unhook()
-  })
-
-  t.deepEqual(Array.from(hook.cache.keys()), [])
-  t.equal(require('child_process').foo, 1)
-
-  t.deepEqual(Array.from(hook.cache.keys()), ['child_process'])
-  t.equal(require('child_process').foo, 1)
-
-  hook.cache.delete('child_process')
-  t.deepEqual(Array.from(hook.cache.keys()), [])
-
-  t.equal(require('child_process').foo, 2)
-  t.deepEqual(Array.from(hook.cache.keys()), ['child_process'])
-
-  t.end()
 })
 
 test('replacement value', function (t) {
@@ -288,7 +261,7 @@ test('absolute file paths', function (t) {
 
 if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
   test('builtin core module with slash', function (t) {
-    t.plan(5)
+    t.plan(4)
 
     const name = 'v8/tools/splaytree'
     let n = 1
@@ -307,7 +280,6 @@ if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
 
     t.equal(exports.foo, 1)
     t.equal(require(name).foo, 1)
-    t.deepEqual(hook.cache.get(name), exports)
     t.equal(n, 2)
   })
 }
@@ -326,29 +298,21 @@ if (semver.satisfies(process.version, '>=14.18.0')) {
       hook.unhook()
     })
 
-    t.deepEqual(Array.from(hook.cache.keys()), [])
     const prefixedMod = require('node:perf_hooks')
     t.equal(prefixedMod.foo, 1)
 
-    t.deepEqual(Array.from(hook.cache.keys()), ['perf_hooks'])
     const unprefixedMod = require('perf_hooks')
     t.equal(unprefixedMod.foo, 1)
     t.strictEqual(prefixedMod, unprefixedMod, 'modules are the same')
-
-    hook.cache.delete('perf_hooks')
-    t.deepEqual(Array.from(hook.cache.keys()), [])
-
-    t.equal(require('perf_hooks').foo, 2)
-    t.deepEqual(Array.from(hook.cache.keys()), ['perf_hooks'])
 
     t.end()
   })
 }
 
 if (semver.satisfies(process.version, '>=18.0.0')) {
-  // For exampe 'node:test' is a core module, 'test' is not.
+  // For example 'node:test' is a core module, 'test' is not.
   test('"node:"-only core modules', function (t) {
-    t.plan(4)
+    t.plan(2)
 
     let n = 0
 
@@ -361,9 +325,7 @@ if (semver.satisfies(process.version, '>=18.0.0')) {
       hook.unhook()
     })
 
-    t.deepEqual(Array.from(hook.cache.keys()), [])
     t.equal(require('node:test').foo, 1)
-    t.deepEqual(Array.from(hook.cache.keys()), ['node:test'])
 
     try {
       require('test')

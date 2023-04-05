@@ -5,6 +5,7 @@ const Module = require('module')
 const resolve = require('resolve')
 const debug = require('debug')('require-in-the-middle')
 const moduleDetailsFromPath = require('module-details-from-path')
+const assert = require('assert')
 
 module.exports = Hook
 
@@ -28,6 +29,48 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
 const normalize = /([/\\]index)?(\.js)?$/
 
+// Cache `onrequire`-patched exports for modules.
+//
+// Exports for built-in (a.k.a. "core") modules are stored in an internal Map.
+// Exports for non-core modules are stored on a private field on the `Module`
+// object in `require.cache`. This allows users to delete from `require.cache`
+// to trigger a re-load (and re-run of the hook's `onrequire`) of a module the
+// next time it is required.
+// https://nodejs.org/docs/latest/api/all.html#all_modules_requirecache
+class ExportsCache {
+  constructor () {
+    this._exportsFromBuiltinId = new Map()
+    this._kRitmExports = Symbol('RitmExports')
+  }
+
+  has (filename, isBuiltin) {
+    if (isBuiltin) {
+      return this._exportsFromBuiltinId.has(filename)
+    } else {
+      const mod = require.cache[filename]
+      return !!(mod && this._kRitmExports in mod)
+    }
+  }
+
+  get (filename, isBuiltin) {
+    if (isBuiltin) {
+      return this._exportsFromBuiltinId.get(filename)
+    } else {
+      const mod = require.cache[filename]
+      return (mod && mod[this._kRitmExports])
+    }
+  }
+
+  set (filename, exports, isBuiltin) {
+    if (isBuiltin) {
+      this._exportsFromBuiltinId.set(filename, exports)
+    } else {
+      assert(filename in require.cache, `unexpected that there is no Module entry for "${filename}" in require.cache`)
+      require.cache[filename][this._kRitmExports] = exports
+    }
+  }
+}
+
 function Hook (modules, options, onrequire) {
   if ((this instanceof Hook) === false) return new Hook(modules, options, onrequire)
   if (typeof modules === 'function') {
@@ -45,7 +88,8 @@ function Hook (modules, options, onrequire) {
     return
   }
 
-  this.cache = new Map()
+  this._cache = new ExportsCache()
+
   this._unhooked = false
   this._origRequire = Module.prototype.require
 
@@ -99,9 +143,9 @@ function Hook (modules, options, onrequire) {
     debug('processing %s module require(\'%s\'): %s', core === true ? 'core' : 'non-core', id, filename)
 
     // return known patched modules immediately
-    if (self.cache.has(filename) === true) {
+    if (self._cache.has(filename, core) === true) {
       debug('returning already patched cached module: %s', filename)
-      return self.cache.get(filename)
+      return self._cache.get(filename, core)
     }
 
     // Check if this module has a patcher in-progress already.
@@ -179,17 +223,15 @@ function Hook (modules, options, onrequire) {
       }
     }
 
-    // only call onrequire the first time a module is loaded
-    if (self.cache.has(filename) === false) {
-      // ensure that the cache entry is assigned a value before calling
-      // onrequire, in case calling onrequire requires the same module.
-      self.cache.set(filename, exports)
-      debug('calling require hook: %s', moduleName)
-      self.cache.set(filename, onrequire(exports, moduleName, basedir))
-    }
+    // ensure that the cache entry is assigned a value before calling
+    // onrequire, in case calling onrequire requires the same module.
+    self._cache.set(filename, exports, core)
+    debug('calling require hook: %s', moduleName)
+    const patchedExports = onrequire(exports, moduleName, basedir)
+    self._cache.set(filename, patchedExports, core)
 
     debug('returning module: %s', moduleName)
-    return self.cache.get(filename)
+    return patchedExports
   }
 }
 
