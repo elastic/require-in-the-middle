@@ -15,7 +15,7 @@
 - If resolving the filename for a `require(...)` fails, defer to the wrapped
   require implementation rather than failing right away. This allows a
   possibly-monkey-patched `require` to do its own special thing.
-  https://github.com/elastic/require-in-the-middle/pull/59
+  (https://github.com/elastic/require-in-the-middle/pull/59)
 
 ## v6.0.0
 
@@ -31,12 +31,12 @@
 
 - Add support for hooking into the require of Node core modules prefixed with
   'node:', e.g. `require('node:http')`. See https://nodejs.org/api/modules.html#core-modules
-  https://github.com/elastic/require-in-the-middle/pull/53
+  (https://github.com/elastic/require-in-the-middle/pull/53)
 
 ## v5.1.0
 
 - Add support for hooking into require of absolute paths.
-  https://github.com/elastic/require-in-the-middle/issues/43
+  (https://github.com/elastic/require-in-the-middle/issues/43)
 
 ## earlier versions
 
