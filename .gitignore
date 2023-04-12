@@ -1,4 +1,5 @@
 /node_modules
 /.vscode
 /tmp
+/require-in-the-middle-*.tgz
 *.example.js

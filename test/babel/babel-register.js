@@ -1,11 +1,12 @@
 'use strict'
 
 const assert = require('assert')
-const Hook = require('../../')
+
+const { Hook } = require('../../')
 
 const hooked = []
 
-Hook(['patterns', 'ipp-printer'], function (exports, name, basedir) {
+const hook = new Hook(['patterns', 'ipp-printer'], function (exports, name, basedir) {
   hooked.push(name)
   exports.patched = true
   return exports
@@ -27,3 +28,5 @@ assert.strictEqual(typeof Printer, 'function')
 assert.strictEqual(typeof Printer.prototype.start, 'function')
 assert.strictEqual(foo, 42)
 assert.deepStrictEqual(hooked, ['patterns', 'ipp-printer'])
+
+hook.unhook()

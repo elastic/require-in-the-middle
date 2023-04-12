@@ -7,7 +7,11 @@ const debug = require('debug')('require-in-the-middle')
 const moduleDetailsFromPath = require('module-details-from-path')
 const assert = require('assert')
 
+// Using the default export is discouraged, but kept for backward compatibility.
+// Use this instead:
+//    const { Hook } = require('require-in-the-middle')
 module.exports = Hook
+module.exports.Hook = Hook
 
 /**
  * Is the given module a "core" module?

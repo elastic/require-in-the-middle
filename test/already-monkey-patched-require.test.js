@@ -3,7 +3,7 @@
 const Module = require('module')
 const test = require('tape')
 
-const Hook = require('../')
+const { Hook } = require('../')
 
 // If a monkey-patch of `require` is already in place that attempts to resolve
 // non-existant modules (e.g. '@azure/functions-core' in this case), and *then*

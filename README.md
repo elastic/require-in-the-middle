@@ -17,10 +17,10 @@ npm install require-in-the-middle --save
 
 ```js
 const path = require('path')
-const Hook = require('require-in-the-middle')
+const { Hook } = require('require-in-the-middle')
 
 // Hook into the express and mongodb module
-Hook(['express', 'mongodb'], function (exports, name, basedir) {
+new Hook(['express', 'mongodb'], function (exports, name, basedir) {
   const version = require(path.join(basedir, 'package.json')).version
 
   console.log('loading %s@%s', name, version)
@@ -37,7 +37,7 @@ Hook(['express', 'mongodb'], function (exports, name, basedir) {
 
 The require-in-the-middle module exposes a single function:
 
-### `hook = Hook([modules][, options], onrequire)`
+### `hook = new Hook([modules][, options], onrequire)`
 
 When called a `hook` object is returned.
 
