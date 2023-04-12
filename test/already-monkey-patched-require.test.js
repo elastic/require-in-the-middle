@@ -24,7 +24,7 @@ test('already monkey-patched require', function (t) {
     }
   })
 
-  const hook = Hook(['http'], function onRequire (exports, name, basedir) {
+  const hook = new Hook(['http'], function onRequire (exports, name, basedir) {
     exports.foo = 1
     return exports
   })
