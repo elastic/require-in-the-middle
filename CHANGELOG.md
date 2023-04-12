@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Change the suggested require usage to be a `Hook` field on the exports,
+
+  ```js
+  const { Hook } = require('require-in-the-middle');  // the new suggested way
+  ```
+
+  rather than the default export:
+
+  ```js
+  const Hook = require('require-in-the-middle');  // deprecated, still supported for backward compat
+  ```
+
+  This is to avoid the need for users to use a [*default* export](https://www.typescriptlang.org/docs/handbook/declaration-files/templates/module-d-ts.html#default-exports)
+  which can get confusing or problematic with TypeScript. See
+  https://github.com/open-telemetry/opentelemetry-js/issues/3701 for some
+  details.
+
+- Change the suggested usage to `new Hook(...)` instead of `Hook(...)`, but
+  both are supported.
+
 - Use the Node.js `require.cache` for caching the exports returned from a
   Hook's `onrequire`. This allows users to delete entries from `require.cache`
   to trigger a re-load (and re-run of the hook's `onrequire`) of a module the

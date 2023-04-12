@@ -4,14 +4,15 @@ const test = require('tape')
 const semver = require('semver')
 const Module = require('module')
 const path = require('path')
-const Hook = require('../')
+
+const { Hook } = require('../')
 
 // The use of deepEqual as opposed to deepStrictEqual in these test is not
 // ideal since it evaluates {} to be equal to [] etc. But if we wanna use tape
 // or assert, this have to do for now.
 
 test('hook.unhook()', function (t) {
-  const hook = Hook(['http'], function (exports, name, basedir) {
+  const hook = new Hook(['http'], function (exports, name, basedir) {
     t.fail('should not call onrequire')
   })
   hook.unhook()
@@ -24,7 +25,7 @@ test('all modules', function (t) {
 
   let n = 1
 
-  const hook = Hook(function (exports, name, basedir) {
+  const hook = new Hook(function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'http')
@@ -61,7 +62,7 @@ test('whitelisted modules', function (t) {
 
   let n = 1
 
-  const hook = Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
+  const hook = new Hook(['ipp-printer', 'patterns'], function (exports, name, basedir) {
     switch (n) {
       case 1:
         t.equal(name, 'ipp-printer')
@@ -93,7 +94,7 @@ test('whitelisted modules', function (t) {
 test('replacement value', function (t) {
   const replacement = {}
 
-  const hook = Hook(['url'], function (exports, name, basedir) {
+  const hook = new Hook(['url'], function (exports, name, basedir) {
     return replacement
   })
 
@@ -109,7 +110,7 @@ test('replacement value', function (t) {
 test('circular', function (t) {
   t.plan(2)
 
-  const hook = Hook(['circular'], function (exports, name, basedir) {
+  const hook = new Hook(['circular'], function (exports, name, basedir) {
     t.deepEqual(exports, { foo: 1 })
     return exports
   })
@@ -130,7 +131,7 @@ test('mid circular applies to completed module', function (t) {
     baz: 'buz'
   }
 
-  const hook = Hook(['mid-circular'], function (exports, name, basedir) {
+  const hook = new Hook(['mid-circular'], function (exports, name, basedir) {
     t.deepEqual(exports, expected)
     return exports
   })
@@ -146,7 +147,7 @@ test('internal', function (t) {
   t.plan(8)
 
   const loadedModules = []
-  const hook = Hook(['internal'], {
+  const hook = new Hook(['internal'], {
     internals: true
   }, function (exports, name, basedir) {
     t.true(name.match(/^internal/))
@@ -173,14 +174,14 @@ test('multiple hooks', function (t) {
     })
   })
 
-  hooks.push(Hook(['http'], function (exports, name, basedir) {
+  hooks.push(new Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
     exports.hook1 = true
     return exports
   }))
 
   // in the same tick
-  hooks.push(Hook(['net'], function (exports, name, basedir) {
+  hooks.push(new Hook(['net'], function (exports, name, basedir) {
     t.equal(name, 'net')
     exports.hook2 = true
     return exports
@@ -188,7 +189,7 @@ test('multiple hooks', function (t) {
 
   setTimeout(function () {
     // at a later tick
-    hooks.push(Hook(['net'], function (exports, name, basedir) {
+    hooks.push(new Hook(['net'], function (exports, name, basedir) {
       t.equal(name, 'net')
       exports.hook3 = true
       return exports
@@ -207,11 +208,11 @@ test('multiple hooks', function (t) {
 test('multiple hook.unhook()', function (t) {
   t.plan(2)
 
-  const hook1 = Hook(['http'], function (exports, name, basedir) {
+  const hook1 = new Hook(['http'], function (exports, name, basedir) {
     t.fail('should not call onrequire')
   })
 
-  const hook2 = Hook(['http'], function (exports, name, basedir) {
+  const hook2 = new Hook(['http'], function (exports, name, basedir) {
     t.equal(name, 'http')
     exports.hook2 = true
     return exports
@@ -232,7 +233,7 @@ test('absolute file paths', function (t) {
   const absolutePathNoExtension = path.join(__dirname, 'absolute', 'absolute-file')
   const absolutePath = absolutePathNoExtension + '.js'
 
-  const hook1 = Hook([absolutePath], function (exports, name, basedir) {
+  const hook1 = new Hook([absolutePath], function (exports, name, basedir) {
     t.equal(name, 'absolute-file')
     t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
     exports.hook1 = true
@@ -244,7 +245,7 @@ test('absolute file paths', function (t) {
 
   hook1.unhook()
 
-  const hook2 = Hook([absolutePath], function (exports, name, basedir) {
+  const hook2 = new Hook([absolutePath], function (exports, name, basedir) {
     t.equal(name, 'absolute-file')
     t.equal(basedir, path.join(process.cwd(), 'test', 'absolute'))
     exports.hook2 = true
@@ -266,7 +267,7 @@ if (semver.lt(process.version, '12.0.0') && Module.builtinModules) {
     const name = 'v8/tools/splaytree'
     let n = 1
 
-    const hook = Hook(function (exports, _name, basedir) {
+    const hook = new Hook(function (exports, _name, basedir) {
       t.equal(_name, name)
       exports.foo = n++
       return exports
@@ -289,7 +290,7 @@ if (semver.satisfies(process.version, '>=14.18.0')) {
   test('"node:"-prefixed builtin modules', function (t) {
     let n = 0
 
-    const hook = Hook(['perf_hooks'], function (exports, name, basedir) {
+    const hook = new Hook(['perf_hooks'], function (exports, name, basedir) {
       exports.foo = ++n
       return exports
     })
@@ -316,7 +317,7 @@ if (semver.satisfies(process.version, '>=18.0.0')) {
 
     let n = 0
 
-    const hook = Hook(['node:test'], function (exports, name, basedir) {
+    const hook = new Hook(['node:test'], function (exports, name, basedir) {
       exports.foo = ++n
       return exports
     })

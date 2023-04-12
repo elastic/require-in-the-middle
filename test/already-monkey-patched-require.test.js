@@ -3,7 +3,7 @@
 const Module = require('module')
 const test = require('tape')
 
-const Hook = require('../')
+const { Hook } = require('../')
 
 // If a monkey-patch of `require` is already in place that attempts to resolve
 // non-existant modules (e.g. '@azure/functions-core' in this case), and *then*
@@ -24,7 +24,7 @@ test('already monkey-patched require', function (t) {
     }
   })
 
-  const hook = Hook(['http'], function onRequire (exports, name, basedir) {
+  const hook = new Hook(['http'], function onRequire (exports, name, basedir) {
     exports.foo = 1
     return exports
   })

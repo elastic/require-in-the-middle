@@ -6,11 +6,11 @@
 
 const test = require('tape')
 
-const Hook = require('../')
+const { Hook } = require('../')
 
 test('reload/re-patch via `delete require.cache[name]`', function (t) {
   let numOnRequireCalls = 0
-  const hook = Hook(['semver'], function (exports, name, basedir) {
+  const hook = new Hook(['semver'], function (exports, name, basedir) {
     numOnRequireCalls++
     return exports
   })
@@ -35,7 +35,7 @@ test('reload/re-patch via `delete require.cache[name]`', function (t) {
 // from `require.cache` in and out. This test case tests that.
 test('stealty-require swap in/out Module values from require.cache', function (t) {
   let numOnRequireCalls = 0
-  const hook = Hook(['semver'], function (exports, name, basedir) {
+  const hook = new Hook(['semver'], function (exports, name, basedir) {
     numOnRequireCalls++
     return exports
   })
