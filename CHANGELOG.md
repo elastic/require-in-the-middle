@@ -1,6 +1,6 @@
 # require-in-the-middle changelog
 
-## Unreleased
+## v7.0.0
 
 - Change the suggested require usage to be a `Hook` field on the exports,
 
