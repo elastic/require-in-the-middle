@@ -1,5 +1,16 @@
 # require-in-the-middle changelog
 
+## Unreleased
+
+- Fix hooking of 'http2' with Node.js versions [8.0, 8.8) where the 'http2'
+  built-in module was behind the `--expose-http2` flag. Release v7.0.0
+  introduced a bug with this case. The process would crash with:
+
+    ```
+    AssertionError [ERR_ASSERTION]: unexpected that there is no Module entry for "http2" in require.cache
+      at ExportsCache.set (.../require-in-the-middle4/index.js:72:7)
+    ```
+
 ## v7.0.0
 
 - Change the suggested require usage to be a `Hook` field on the exports,
