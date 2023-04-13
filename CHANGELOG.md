@@ -1,6 +1,6 @@
 # require-in-the-middle changelog
 
-## Unreleased
+## v7.0.1
 
 - Fix hooking of 'http2' with Node.js versions [8.0, 8.8) where the 'http2'
   built-in module was behind the `--expose-http2` flag. Release v7.0.0
