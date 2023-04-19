@@ -23,10 +23,27 @@ let isCore
 if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
   isCore = Module.isBuiltin
 } else {
-  isCore = moduleName => {
-    // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because the
-    // latter is doing version range matches for every call.
-    return !!resolve.core[moduleName]
+  const [major, minor] = process.versions.node.split('.').map(Number)
+  if (major === 8 && minor < 8) {
+    // For node versions `[8.0, 8.8)` the "http2" module was built-in but
+    // behind the `--expose-http2` flag. `resolve` only considers unflagged
+    // modules to be core: https://github.com/browserify/resolve/issues/139
+    // However, for `ExportsCache` to work for "http2" we need it to be
+    // considered core.
+    isCore = moduleName => {
+      if (moduleName === 'http2') {
+        return true
+      }
+      // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
+      // the latter is doing version range matches for every call.
+      return !!resolve.core[moduleName]
+    }
+  } else {
+    isCore = moduleName => {
+      // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
+      // the latter is doing version range matches for every call.
+      return !!resolve.core[moduleName]
+    }
   }
 }
 
