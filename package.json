@@ -3,6 +3,7 @@
   "version": "7.0.1",
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
+  "types": "types/index.d.ts",
   "dependencies": {
     "debug": "^4.1.1",
     "module-details-from-path": "^1.0.3",
@@ -42,7 +43,9 @@
     "module",
     "load"
   ],
-  "files": [],
+  "files": [
+    "types"
+  ],
   "author": "Thomas Watson Steen <w@tson.dk> (https://twitter.com/wa7son)",
   "license": "MIT",
   "bugs": {
