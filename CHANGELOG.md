@@ -1,10 +1,17 @@
 # require-in-the-middle changelog
 
+## Unreleased
+
+- Add (experimental) [TypeScript types](./types/index.d.ts).
+  (https://github.com/elastic/require-in-the-middle/pull/67)
+
+
 ## v7.0.1
 
 - Fix hooking of 'http2' with Node.js versions [8.0, 8.8) where the 'http2'
-  built-in module was behind the `--expose-http2` flag. Release v7.0.0
-  introduced a bug with this case. The process would crash with:
+  built-in module was behind the `--expose-http2` flag.
+  (https://github.com/elastic/require-in-the-middle/pull/68)
+  Release v7.0.0 introduced a bug with this case where the process would crash with:
 
     ```
     AssertionError [ERR_ASSERTION]: unexpected that there is no Module entry for "http2" in require.cache
