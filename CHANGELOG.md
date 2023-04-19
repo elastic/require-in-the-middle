@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add (experimental) [TypeScript types](./types/index.d.ts).
+- Add [TypeScript types](./types/index.d.ts).
   (https://github.com/elastic/require-in-the-middle/pull/67)
 
 
