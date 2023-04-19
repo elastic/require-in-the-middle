@@ -1,6 +1,6 @@
 # require-in-the-middle changelog
 
-## Unreleased
+## v7.1.0
 
 - Add [TypeScript types](./types/index.d.ts).
   (https://github.com/elastic/require-in-the-middle/pull/67)
