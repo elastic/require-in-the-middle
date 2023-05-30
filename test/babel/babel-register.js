@@ -6,7 +6,11 @@ const { Hook } = require('../../')
 
 const hooked = []
 
-const hook = new Hook(['patterns', 'ipp-printer'], function (exports, name, basedir) {
+// Hook all modules as @opentelemetry/instrumentation does.
+const hook = new Hook('*', function (exports, name, basedir) {
+  if (['patterns', 'ipp-printer'].indexOf(name) === -1) {
+    return exports
+  }
   hooked.push(name)
   exports.patched = true
   return exports
