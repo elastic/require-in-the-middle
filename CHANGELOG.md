@@ -1,6 +1,6 @@
 # require-in-the-middle changelog
 
-## unreleased
+## v7.1.1
 
 - Fallback to caching hooked module exports internally if the `require`d
   module does not appear in `require.cache`. This can only happen if there
