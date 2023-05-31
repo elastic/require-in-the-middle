@@ -5,7 +5,6 @@ const Module = require('module')
 const resolve = require('resolve')
 const debug = require('debug')('require-in-the-middle')
 const moduleDetailsFromPath = require('module-details-from-path')
-const assert = require('assert')
 
 // Using the default export is discouraged, but kept for backward compatibility.
 // Use this instead:
@@ -53,30 +52,38 @@ const normalize = /([/\\]index)?(\.js)?$/
 // Cache `onrequire`-patched exports for modules.
 //
 // Exports for built-in (a.k.a. "core") modules are stored in an internal Map.
+//
 // Exports for non-core modules are stored on a private field on the `Module`
 // object in `require.cache`. This allows users to delete from `require.cache`
 // to trigger a re-load (and re-run of the hook's `onrequire`) of a module the
 // next time it is required.
 // https://nodejs.org/docs/latest/api/all.html#all_modules_requirecache
+//
+// In some special cases -- e.g. some other `require()` hook swapping out
+// `Module._cache` like `@babel/register` -- a non-core module won't be in
+// `require.cache`. In that case this falls back to caching on the internal Map.
 class ExportsCache {
   constructor () {
-    this._exportsFromBuiltinId = new Map()
+    this._localCache = new Map() // <module filename or id> -> <exports>
     this._kRitmExports = Symbol('RitmExports')
   }
 
   has (filename, isBuiltin) {
-    if (isBuiltin) {
-      return this._exportsFromBuiltinId.has(filename)
-    } else {
+    if (this._localCache.has(filename)) {
+      return true
+    } else if (!isBuiltin) {
       const mod = require.cache[filename]
       return !!(mod && this._kRitmExports in mod)
+    } else {
+      return false
     }
   }
 
   get (filename, isBuiltin) {
-    if (isBuiltin) {
-      return this._exportsFromBuiltinId.get(filename)
-    } else {
+    const cachedExports = this._localCache.get(filename)
+    if (cachedExports !== undefined) {
+      return cachedExports
+    } else if (!isBuiltin) {
       const mod = require.cache[filename]
       return (mod && mod[this._kRitmExports])
     }
@@ -84,10 +91,12 @@ class ExportsCache {
 
   set (filename, exports, isBuiltin) {
     if (isBuiltin) {
-      this._exportsFromBuiltinId.set(filename, exports)
-    } else {
-      assert(filename in require.cache, `unexpected that there is no Module entry for "${filename}" in require.cache`)
+      this._localCache.set(filename, exports)
+    } else if (filename in require.cache) {
       require.cache[filename][this._kRitmExports] = exports
+    } else {
+      debug('non-core module is unexpectedly not in require.cache: "%s"', filename)
+      this._localCache.set(filename, exports)
     }
   }
 }

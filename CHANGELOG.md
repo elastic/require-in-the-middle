@@ -1,5 +1,14 @@
 # require-in-the-middle changelog
 
+## unreleased
+
+- Fallback to caching hooked module exports internally if the `require`d
+  module does not appear in `require.cache`. This can only happen if there
+  is some other `require` hook in play -- e.g. `@babel/register` which is
+  used by `@babel/cli`, aka the `babel-node` command.
+  (https://github.com/elastic/require-in-the-middle/issues/72)
+
+
 ## v7.1.0
 
 - Add [TypeScript types](./types/index.d.ts).
