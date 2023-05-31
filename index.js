@@ -74,6 +74,8 @@ class ExportsCache {
     } else if (!isBuiltin) {
       const mod = require.cache[filename]
       return !!(mod && this._kRitmExports in mod)
+    } else {
+      return false
     }
   }
 
