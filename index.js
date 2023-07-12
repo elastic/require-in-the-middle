@@ -236,6 +236,7 @@ function Hook (modules, options, onrequire) {
           res = resolve.sync(moduleName, { basedir })
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
+          self._cache.set(filename, exports, core)
           return exports // abort if module could not be resolved (e.g. no main in package.json and no index.js file)
         }
 
@@ -247,6 +248,7 @@ function Hook (modules, options, onrequire) {
             debug('preparing to process require of internal file: %s', moduleName)
           } else {
             debug('ignoring require of non-main module file: %s', res)
+            self._cache.set(filename, exports, core)
             return exports // abort if not main module file
           }
         }
