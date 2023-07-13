@@ -1,5 +1,12 @@
 # require-in-the-middle changelog
 
+## v7.2.0
+
+- Improve performance (possibly significantly) when using the Hook without
+  a modules argument, e.g. `new Hook(null, onrequire)`, by caching exports
+  in more cases. Contributed by @nwalters512.
+  (https://github.com/elastic/require-in-the-middle/issues/75)
+
 ## v7.1.1
 
 - Fallback to caching hooked module exports internally if the `require`d
