@@ -1,4 +1,5 @@
 'use strict'
+/* global globalThis */
 
 const path = require('path')
 const Module = require('module')
@@ -122,6 +123,7 @@ function Hook (modules, options, onrequire) {
 
   this._unhooked = false
   this._origRequire = Module.prototype.require
+  this._sync = resolve.sync
 
   const self = this
   const patching = new Set()
@@ -233,7 +235,7 @@ function Hook (modules, options, onrequire) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
-          res = resolve.sync(moduleName, { basedir })
+          res = self._sync(moduleName, { basedir })
         } catch (e) {
           debug('could not resolve module: %s', moduleName)
           self._cache.set(filename, exports, core)
@@ -264,6 +266,9 @@ function Hook (modules, options, onrequire) {
 
     debug('returning module: %s', moduleName)
     return patchedExports
+  }
+  if (globalThis) {
+    globalThis.__ritm_hooks__ = [...(globalThis.__ritm_hooks__ || []), this]
   }
 }
 
