@@ -225,10 +225,10 @@ function Hook (modules, options, onrequire) {
       // moduleName = 'foo'
       // fullModuleName = 'foo/bar'
       if (hasWhitelist === true && modules.includes(moduleName) === false) {
-        if (modules.includes(fullModuleName) === false) return exports // abort if module name isn't on whitelist
+        if (isWhitelistedMappedModule({ modules, fullModuleName }) === false) return exports // abort if module name isn't on whitelist
 
         // if we get to this point, it means that we're requiring a whitelisted sub-module
-        moduleName = fullModuleName
+        moduleName = normalizeModuleName(fullModuleName)
       } else {
         // figure out if this is the main module file, or a file inside the module
         let res
@@ -280,4 +280,35 @@ Hook.prototype.unhook = function () {
 function resolveModuleName (stat) {
   const normalizedPath = path.sep !== '/' ? stat.path.split(path.sep).join('/') : stat.path
   return path.posix.join(stat.name, normalizedPath).replace(normalize, '')
+}
+
+/**
+ * Determines if a module is included in the allow list regardless of file
+ * extension.
+ *
+ * @param {string[]} modules The list of module names that are allowed to be
+ * hooked by the current hook process.
+ * @param {string} fullModuleName The fully resolved module name that may or
+ * may not end with a file extension.
+ *
+ * @returns {boolean}
+ */
+function isWhitelistedMappedModule ({ modules, fullModuleName }) {
+  return modules.includes(normalizeModuleName(fullModuleName))
+}
+
+/**
+ * Remove any file extension from a module name that may have been added by
+ * resolving a mapped export to the correct source file.
+ *
+ * @example
+ * const name = normalizeModuleName('@foo/bar/baz.cjs')
+ * console.log(name) // '@foo/bar/baz'
+ *
+ * @param {string} input The module name to normalize.
+ *
+ * @returns {string}
+ */
+function normalizeModuleName (input) {
+  return input.replace(/(\.(js|cjs))$/, '')
 }
