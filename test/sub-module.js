@@ -83,3 +83,26 @@ test('require(\'sub-module/conflict/index.js\') => sub-module/conflict/index.js'
   t.equal(require('./node_modules/sub-module'), 'sub-module/index.js')
   t.equal(require('./node_modules/sub-module/conflict/index.js'), 'sub-module/conflict/index.js')
 })
+
+test('require(\'sub-module/foo\') with \'sub-module\'', function (t) {
+  t.plan(5)
+
+  const names = []
+  const hook = new Hook(['sub-module/foo', 'sub-module'], function (exports, name, basedir) {
+    names.push(name)
+    if (name === 'sub-module') {
+      t.equal(exports, 'sub-module/index.js')
+    } else {
+      t.equal(exports, 'sub-module/foo.js')
+    }
+    return name
+  })
+
+  t.on('end', function () {
+    hook.unhook()
+  })
+
+  t.equal(require('./node_modules/sub-module'), 'sub-module')
+  t.equal(require('./node_modules/sub-module/foo'), 'sub-module/foo')
+  t.same(names, ['sub-module', 'sub-module/foo'])
+})
