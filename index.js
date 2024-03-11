@@ -224,12 +224,21 @@ function Hook (modules, options, onrequire) {
       // Ex: require('foo/lib/../bar.js')
       // moduleName = 'foo'
       // fullModuleName = 'foo/bar'
-      const modulesIncludesFullModuleName = hasWhitelist && modules.includes(fullModuleName)
-      if (hasWhitelist === true && (modulesIncludesFullModuleName === true || modules.includes(moduleName) === false)) {
-        if (modulesIncludesFullModuleName === false) return exports // abort if module name isn't on whitelist
-        // if we get to this point, it means that we're requiring a whitelisted sub-module
-        moduleName = fullModuleName
-      } else {
+      let isWhitelistedSubmodule = false
+      if (hasWhitelist) {
+        // abort if module name isn't on whitelist
+        if (!modules.includes(moduleName) && !modules.includes(fullModuleName)) {
+          return exports
+        }
+
+        if (modules.includes(fullModuleName)) {
+          // if we get to this point, it means that we're requiring a whitelisted sub-module
+          moduleName = fullModuleName
+          isWhitelistedSubmodule = true
+        }
+      }
+
+      if (!isWhitelistedSubmodule) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
