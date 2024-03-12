@@ -1,5 +1,12 @@
 # require-in-the-middle changelog
 
+## v7.2.1
+
+- Fix a limitation so that a single `Hook` can hook a module and a sub-module,
+  e.g. `new Hook(['example', 'example/some-sub-module'], ...)`.
+  (https://github.com/elastic/require-in-the-middle/pull/84)
+
+
 ## v7.2.0
 
 - Improve performance (possibly significantly) when using the Hook without
