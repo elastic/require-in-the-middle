@@ -231,7 +231,7 @@ function Hook (modules, options, onrequire) {
           return exports
         }
 
-        if (modules.includes(fullModuleName)) {
+        if (modules.includes(fullModuleName) && moduleName !== fullModuleName) {
           // if we get to this point, it means that we're requiring a whitelisted sub-module
           moduleName = fullModuleName
           isWhitelistedSubmodule = true
