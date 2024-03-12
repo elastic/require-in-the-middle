@@ -217,19 +217,38 @@ function Hook (modules, options, onrequire) {
       moduleName = stat.name
       basedir = stat.basedir
 
+      // Ex: require('foo/lib/../bar.js')
+      // moduleName = 'foo'
+      // fullModuleName = 'foo/bar'
       const fullModuleName = resolveModuleName(stat)
 
       debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
-      // Ex: require('foo/lib/../bar.js')
-      // moduleName = 'foo'
-      // fullModuleName = 'foo/bar'
-      if (hasWhitelist === true && modules.includes(moduleName) === false) {
-        if (isWhitelistedMappedModule({ modules, fullModuleName }) === false) return exports // abort if module name isn't on whitelist
+      let matchFound = false
+      if (hasWhitelist) {
+        if (!id.startsWith('.') && modules.includes(id)) {
+          // Not starting with '.' means `id` is identifying a module path,
+          // as opposed to a local file path. (Note: I'm not sure about
+          // absolute paths, but those are handled above.)
+          // If this `id` is in `modules`, then this could be a match to an
+          // package "exports" entry point that wouldn't otherwise match below.
+          moduleName = id
+          matchFound = true
+        }
 
-        // if we get to this point, it means that we're requiring a whitelisted sub-module
-        moduleName = normalizeModuleName(fullModuleName)
-      } else {
+        // abort if module name isn't on whitelist
+        if (!modules.includes(moduleName) && !modules.includes(fullModuleName)) {
+          return exports
+        }
+
+        if (modules.includes(fullModuleName) && fullModuleName !== moduleName) {
+          // if we get to this point, it means that we're requiring a whitelisted sub-module
+          moduleName = fullModuleName
+          matchFound = true
+        }
+      }
+
+      if (!matchFound) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
@@ -280,35 +299,4 @@ Hook.prototype.unhook = function () {
 function resolveModuleName (stat) {
   const normalizedPath = path.sep !== '/' ? stat.path.split(path.sep).join('/') : stat.path
   return path.posix.join(stat.name, normalizedPath).replace(normalize, '')
-}
-
-/**
- * Determines if a module is included in the allow list regardless of file
- * extension.
- *
- * @param {string[]} modules The list of module names that are allowed to be
- * hooked by the current hook process.
- * @param {string} fullModuleName The fully resolved module name that may or
- * may not end with a file extension.
- *
- * @returns {boolean}
- */
-function isWhitelistedMappedModule ({ modules, fullModuleName }) {
-  return modules.includes(normalizeModuleName(fullModuleName))
-}
-
-/**
- * Remove any file extension from a module name that may have been added by
- * resolving a mapped export to the correct source file.
- *
- * @example
- * const name = normalizeModuleName('@foo/bar/baz.cjs')
- * console.log(name) // '@foo/bar/baz'
- *
- * @param {string} input The module name to normalize.
- *
- * @returns {string}
- */
-function normalizeModuleName (input) {
-  return input.replace(/(\.(js|cjs))$/, '')
 }
