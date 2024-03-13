@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 
 # Some targets depend on https://github/trentm/json being on the PATH.
 JSON ?= json
@@ -33,7 +34,7 @@ cutarelease: check
 	@which $(JSON) 2>/dev/null 1>/dev/null && \
 	    ver=$(shell $(JSON) -f package.json version) && \
 	    name=$(shell $(JSON) -f package.json name) && \
-	    publishedVer=$(shell npm view -j $(shell $(JSON) -f package.json name)@$(shell $(JSON) -f package.json version) version 2>/dev/null) && \
+	    publishedVer=$(shell npm view -j $(shell $(JSON) -f package.json name) time 2>/dev/null | $(JSON) -D/ $(shell $(JSON) -f package.json version)) && \
 	    if [[ -n "$$publishedVer" ]]; then \
 		echo "error: $$name@$$ver is already published to npm"; \
 		exit 1; \
