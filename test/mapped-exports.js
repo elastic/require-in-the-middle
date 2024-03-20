@@ -1,9 +1,13 @@
 'use strict'
 
+const semver = require('semver')
 const test = require('tape')
 const { Hook } = require('../')
 
-test('handles mapped exports: mapped-exports/foo', function (t) {
+// Mapped export tests require Node.js >=12.17.0 for "exports" support in package.json.
+const nodeSupportsExports = semver.lt(process.version, '12.17.0')
+
+test('handles mapped exports: mapped-exports/foo', { skip: nodeSupportsExports }, function (t) {
   t.plan(2)
 
   const hook = new Hook(['mapped-exports/foo'], function (exports, name) {
@@ -21,7 +25,7 @@ test('handles mapped exports: mapped-exports/foo', function (t) {
   hook.unhook()
 })
 
-test('handles mapped exports: mapped-exports/bar', function (t) {
+test('handles mapped exports: mapped-exports/bar', { skip: nodeSupportsExports }, function (t) {
   t.plan(2)
 
   const hook = new Hook(['mapped-exports/bar'], function (exports, name) {
