@@ -217,28 +217,38 @@ function Hook (modules, options, onrequire) {
       moduleName = stat.name
       basedir = stat.basedir
 
+      // Ex: require('foo/lib/../bar.js')
+      // moduleName = 'foo'
+      // fullModuleName = 'foo/bar'
       const fullModuleName = resolveModuleName(stat)
 
       debug('resolved filename to module: %s (id: %s, resolved: %s, basedir: %s)', moduleName, id, fullModuleName, basedir)
 
-      // Ex: require('foo/lib/../bar.js')
-      // moduleName = 'foo'
-      // fullModuleName = 'foo/bar'
-      let isWhitelistedSubmodule = false
+      let matchFound = false
       if (hasWhitelist) {
+        if (!id.startsWith('.') && modules.includes(id)) {
+          // Not starting with '.' means `id` is identifying a module path,
+          // as opposed to a local file path. (Note: I'm not sure about
+          // absolute paths, but those are handled above.)
+          // If this `id` is in `modules`, then this could be a match to an
+          // package "exports" entry point that wouldn't otherwise match below.
+          moduleName = id
+          matchFound = true
+        }
+
         // abort if module name isn't on whitelist
         if (!modules.includes(moduleName) && !modules.includes(fullModuleName)) {
           return exports
         }
 
-        if (modules.includes(fullModuleName) && moduleName !== fullModuleName) {
+        if (modules.includes(fullModuleName) && fullModuleName !== moduleName) {
           // if we get to this point, it means that we're requiring a whitelisted sub-module
           moduleName = fullModuleName
-          isWhitelistedSubmodule = true
+          matchFound = true
         }
       }
 
-      if (!isWhitelistedSubmodule) {
+      if (!matchFound) {
         // figure out if this is the main module file, or a file inside the module
         let res
         try {
