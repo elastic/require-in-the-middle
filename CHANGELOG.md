@@ -1,5 +1,13 @@
 # require-in-the-middle changelog
 
+## v7.3.0
+
+- Module name args passed to a `Hook` will now match against package
+  entry points defined by "exports" in package.json.
+  https://nodejs.org/api/packages.html#package-entry-points
+  (https://github.com/elastic/require-in-the-middle/pull/82)
+
+
 ## v7.2.1
 
 - Fix a limitation so that a single `Hook` can hook a module and a sub-module,
@@ -13,6 +21,7 @@
   a modules argument, e.g. `new Hook(null, onrequire)`, by caching exports
   in more cases. Contributed by @nwalters512.
   (https://github.com/elastic/require-in-the-middle/issues/75)
+
 
 ## v7.1.1
 
