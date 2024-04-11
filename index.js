@@ -237,11 +237,12 @@ function Hook (modules, options, onrequire) {
         }
 
         // abort if module name isn't on whitelist
-        if (!modules.includes(moduleName) && !modules.includes(fullModuleName)) {
+        const noExtFullModuleName = fullModuleName.replace(/(.+)(\.(js|cjs))$/, '$1')
+        if (!modules.includes(moduleName) && !modules.includes(noExtFullModuleName)) {
           return exports
         }
 
-        if (modules.includes(fullModuleName) && fullModuleName !== moduleName) {
+        if (modules.includes(noExtFullModuleName) && noExtFullModuleName !== moduleName) {
           // if we get to this point, it means that we're requiring a whitelisted sub-module
           moduleName = fullModuleName
           matchFound = true

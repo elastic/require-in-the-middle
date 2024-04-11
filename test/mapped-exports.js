@@ -42,3 +42,23 @@ test('handles mapped exports: mapped-exports/bar', { skip: nodeSupportsExports }
 
   hook.unhook()
 })
+
+test('handles mapped exports: picks up allow listed resolved module', { skip: nodeSupportsExports }, function (t) {
+  t.plan(2)
+
+  let hookHit = false
+  const hook = new Hook(['@langchain/core/dist/callbacks/manager'], function (exports, name) {
+    t.equal(name, '@langchain/core/dist/callbacks/manager.cjs')
+    exports.BaseCallbackManager.prototype.setHandler = function () {
+      hookHit = true
+    }
+    return exports
+  })
+
+  const { CallbackManager } = require('@langchain/core/callbacks/manager')
+  const manager = new CallbackManager()
+  manager.setHandler(() => {})
+  t.equal(hookHit, true)
+
+  hook.unhook()
+})
