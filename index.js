@@ -226,11 +226,40 @@ function Hook (modules, options, onrequire) {
 
       let matchFound = false
       if (hasWhitelist) {
-        if (!id.startsWith('.') && modules.includes(id)) {
+        if (id.startsWith('.') === true && modules.includes(id) === false) {
+          // Try to resolve a package export relative to the base package.
+          // If found, and the package export is in the allow list, return
+          // success. Basically, we take a required module like
+          // `../dist/foo/bar.cjs` and narrow it down to what is likely present
+          // in the package exports.
+          let doWork = true
+          const parts = id.split('/')
+          const fileName = parts[parts.length - 1]
+          parts[parts.length - 1] = path.basename(fileName, path.extname(fileName))
+          do {
+            try {
+              parts.shift()
+              if (parts.length === 0) {
+                // We couldn't find anything, so let the rest of the algorithm
+                // play out.
+                doWork = false
+                continue
+              }
+
+              const exportName = moduleName + '/' + parts.join('/')
+              require.resolve(exportName)
+              moduleName = exportName
+              if (modules.includes(exportName) === true) {
+                matchFound = true
+              }
+              doWork = false
+            } catch {}
+          } while (doWork === true)
+        } else if (!id.startsWith('.') && modules.includes(id)) {
           // Not starting with '.' means `id` is identifying a module path,
           // as opposed to a local file path. (Note: I'm not sure about
           // absolute paths, but those are handled above.)
-          // If this `id` is in `modules`, then this could be a match to an
+          // If this `id` is in `modules`, then this could be a match to a
           // package "exports" entry point that wouldn't otherwise match below.
           moduleName = id
           matchFound = true
