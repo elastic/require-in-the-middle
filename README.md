@@ -43,27 +43,49 @@ When called a `hook` object is returned.
 
 Arguments:
 
-- `modules` &lt;string[]> An optional array of module names to limit which modules
-  trigger a call of the `onrequire` callback. If specified, this must be the
-  first argument. Both regular modules (e.g. `react-dom`) and
-  sub-modules (e.g. `react-dom/server`) can be specified in the array.
-- `options` &lt;Object> An optional object containing fields that change when the
-  `onrequire` callback is called. If specified, this must be the second
-  argument.
-  - `options.internals` &lt;boolean> Specifies whether `onrequire` should be called
-    when module-internal files are loaded; defaults to `false`.
-- `onrequire` &lt;Function> The function to call when a module is required.
+- `modules` {string[]} An optional array of module names or normalized module
+  sub-paths to limit which `require(...)` calls will trigger a call of the
+  `onrequire` callback. If specified, this must be the first argument. There
+  are a number of forms these entries can take:
+
+  - A package name, e.g., `express` or `@fastify/busboy`.
+  - A package [entry-point](https://nodejs.org/api/packages.html#package-entry-points),
+    as listed in the "exports" entry in a package's "package.json" file, e.g.
+    `some-package/entry-point`.
+  - A package sub-module.
+    E.g., `express/lib/request` will hook
+    `.../node_modules/express/lib/request.js` and `express/lib/router` will hook
+    `.../node_modules/express/lib/router/index.js`. (Note: To hook an internal
+    package file using the `.cjs` extension you must specify the extension in
+    the `modules` entry. E.g. `@langchain/core/dist/callbacks/manager.cjs` is
+    required to hook
+    `.../node_modules/@langchain/core/dist/callbacks/manager.cjs`.
+    This is because []`.cjs` is not handled specially by `require()` the way
+    `.js` is](https://nodejs.org/api/modules.html#file-modules).)
+  - A package sub-path, *if `options.internals === true`*. Using the `internals`
+    option allows hooking raw paths inside a package. The hook arguments for
+    these paths **include the file extension**. E.g.,
+    `new Hook(['@redis/client/dist/lib/client/index.js'], {internals: true}, ...`
+    will hook `.../node_modules/@redis/client/dist/lib/client/index.js`.
+
+- `options` {Object} An optional object to configure Hook behaviour.  If
+  specified, this must be the second argument.
+
+  - `options.internals` {boolean} Specifies whether `onrequire` should be called
+    when any module-internal files are loaded; defaults to `false`.
+
+- `onrequire` {Function} The function to call when a module is required.
 
 The `onrequire` callback will be called the first time a module is
 required. The function is called with three arguments:
 
-- `exports` &lt;Object> The value of the `module.exports` property that would
+- `exports` {Object} The value of the `module.exports` property that would
   normally be exposed by the required module.
-- `name` &lt;string> The name of the module being required. If `options.internals`
+- `name` {string} The name of the module being required. If `options.internals`
   was set to `true`, the path of module-internal files that are loaded
   (relative to `basedir`) will be appended to the module name, separated by
   `path.sep`.
-- `basedir` &lt;string> The directory where the module is located, or `undefined`
+- `basedir` {string} The directory where the module is located, or `undefined`
   for core modules.
 
 Return the value you want the module to expose (normally the `exports`
