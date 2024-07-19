@@ -122,7 +122,6 @@ function Hook (modules, options, onrequire) {
 
   this._unhooked = false
   this._origRequire = Module.prototype.require
-  this._origGetBuiltinModule = process.getBuiltinModule
 
   const self = this
   const patching = new Set()
@@ -143,16 +142,19 @@ function Hook (modules, options, onrequire) {
     return patchedRequire.call(this, arguments, false)
   }
 
-  this._getBuiltinModule = process.getBuiltinModule = function (id) {
-    if (self._unhooked === true) {
-      // if the patched process.getBuiltinModule function could not be removed because
-      // someone else patched it after it was patched here, we just abort and pass the
-      // request onwards to the original process.getBuiltinModule
-      debug('ignoring process.getBuiltinModule call - module is soft-unhooked')
-      return self._origGetBuiltinModule.apply(this, arguments)
-    }
+  if (typeof process.getBuiltinModule === 'function') {
+    this._origGetBuiltinModule = process.getBuiltinModule
+    this._getBuiltinModule = process.getBuiltinModule = function (id) {
+      if (self._unhooked === true) {
+        // if the patched process.getBuiltinModule function could not be removed because
+        // someone else patched it after it was patched here, we just abort and pass the
+        // request onwards to the original process.getBuiltinModule
+        debug('ignoring process.getBuiltinModule call - module is soft-unhooked')
+        return self._origGetBuiltinModule.apply(this, arguments)
+      }
 
-    return patchedRequire.call(this, arguments, true)
+      return patchedRequire.call(this, arguments, true)
+    }
   }
 
   // Preserve the original require/process.getBuiltinModule arguments in `args`
@@ -172,9 +174,10 @@ function Hook (modules, options, onrequire) {
       }
     } else if (coreOnly) {
       // `coreOnly` is `true` if this was a call to `process.getBuiltinModule`, in which case
-      // we don't want to return anything if the requested `id` isn't a core module
-      debug('call to process.getBuiltinModule with unknown built-in id - returning undefined')
-      return undefined
+      // we don't want to return anything if the requested `id` isn't a core module. Falling
+      // back to default behaviour, which at the time of this wrting is simply returning `undefined`
+      debug('call to process.getBuiltinModule with unknown built-in id')
+      return self._origGetBuiltinModule.apply(this, args)
     } else {
       try {
         filename = Module._resolveFilename(id, this)
