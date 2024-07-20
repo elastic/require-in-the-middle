@@ -325,11 +325,13 @@ Hook.prototype.unhook = function () {
     debug('require unhook unsuccessful')
   }
 
-  if (this._getBuiltinModule === process.getBuiltinModule) {
-    process.getBuiltinModule = this._origGetBuiltinModule
-    debug('process.getBuiltinModule unhook successful')
-  } else {
-    debug('process.getBuiltinModule unhook unsuccessful')
+  if (process.getBuiltinModule !== undefined) {
+    if (this._getBuiltinModule === process.getBuiltinModule) {
+      process.getBuiltinModule = this._origGetBuiltinModule
+      debug('process.getBuiltinModule unhook successful')
+    } else {
+      debug('process.getBuiltinModule unhook unsuccessful')
+    }
   }
 }
 
