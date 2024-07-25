@@ -1,5 +1,12 @@
 # require-in-the-middle changelog
 
+## v7.4.0
+
+- Support hooking built-in Node.js loaded via
+  [`process.getBuiltinModule`](https://nodejs.org/api/all.html#all_process_processgetbuiltinmoduleid),
+  added in v22.3.0.
+  (https://github.com/elastic/require-in-the-middle/pull/92)
+
 ## v7.3.0
 
 - Module name args passed to a `Hook` will now match against package
