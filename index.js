@@ -139,6 +139,27 @@ function Hook (modules, options, onrequire) {
       return self._origRequire.apply(this, arguments)
     }
 
+    return patchedRequire.call(this, arguments, false)
+  }
+
+  if (typeof process.getBuiltinModule === 'function') {
+    this._origGetBuiltinModule = process.getBuiltinModule
+    this._getBuiltinModule = process.getBuiltinModule = function (id) {
+      if (self._unhooked === true) {
+        // if the patched process.getBuiltinModule function could not be removed because
+        // someone else patched it after it was patched here, we just abort and pass the
+        // request onwards to the original process.getBuiltinModule
+        debug('ignoring process.getBuiltinModule call - module is soft-unhooked')
+        return self._origGetBuiltinModule.apply(this, arguments)
+      }
+
+      return patchedRequire.call(this, arguments, true)
+    }
+  }
+
+  // Preserve the original require/process.getBuiltinModule arguments in `args`
+  function patchedRequire (args, coreOnly) {
+    const id = args[0]
     const core = isCore(id)
     let filename // the string used for caching
     if (core) {
@@ -151,6 +172,12 @@ function Hook (modules, options, onrequire) {
           filename = idWithoutPrefix
         }
       }
+    } else if (coreOnly) {
+      // `coreOnly` is `true` if this was a call to `process.getBuiltinModule`, in which case
+      // we don't want to return anything if the requested `id` isn't a core module. Falling
+      // back to default behaviour, which at the time of this wrting is simply returning `undefined`
+      debug('call to process.getBuiltinModule with unknown built-in id')
+      return self._origGetBuiltinModule.apply(this, args)
     } else {
       try {
         filename = Module._resolveFilename(id, this)
@@ -164,7 +191,7 @@ function Hook (modules, options, onrequire) {
         // where `@azure/functions-core` resolves to an internal object.
         // https://github.com/Azure/azure-functions-nodejs-worker/blob/v3.5.2/src/setupCoreModule.ts#L46-L54
         debug('Module._resolveFilename("%s") threw %j, calling original Module.require', id, resolveErr.message)
-        return self._origRequire.apply(this, arguments)
+        return self._origRequire.apply(this, args)
       }
     }
 
@@ -185,7 +212,9 @@ function Hook (modules, options, onrequire) {
       patching.add(filename)
     }
 
-    const exports = self._origRequire.apply(this, arguments)
+    const exports = coreOnly
+      ? self._origGetBuiltinModule.apply(this, args)
+      : self._origRequire.apply(this, args)
 
     // If it's already patched, just return it as-is.
     if (isPatching === true) {
@@ -288,11 +317,21 @@ function Hook (modules, options, onrequire) {
 
 Hook.prototype.unhook = function () {
   this._unhooked = true
+
   if (this._require === Module.prototype.require) {
     Module.prototype.require = this._origRequire
-    debug('unhook successful')
+    debug('require unhook successful')
   } else {
-    debug('unhook unsuccessful')
+    debug('require unhook unsuccessful')
+  }
+
+  if (process.getBuiltinModule !== undefined) {
+    if (this._getBuiltinModule === process.getBuiltinModule) {
+      process.getBuiltinModule = this._origGetBuiltinModule
+      debug('process.getBuiltinModule unhook successful')
+    } else {
+      debug('process.getBuiltinModule unhook unsuccessful')
+    }
   }
 }
 

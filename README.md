@@ -6,6 +6,7 @@ modules on-the-fly as they are being required.
 [![npm](https://img.shields.io/npm/v/require-in-the-middle.svg)](https://www.npmjs.com/package/require-in-the-middle)
 [![Test status](https://github.com/elastic/require-in-the-middle/workflows/Test/badge.svg)](https://github.com/elastic/require-in-the-middle/actions)
 
+Also supports hooking into calls to `process.getBuiltinModule()`, which was introduced in Node.js v22.3.0.
 
 ## Installation
 
@@ -72,7 +73,7 @@ argument).
 ### `hook.unhook()`
 
 Removes the `onrequire` callback so that it will not be triggerd by
-subsequent calls to `require()`.
+subsequent calls to `require()` or `process.getBuiltinModule()`.
 
 ## License
 
