@@ -20,7 +20,16 @@ module.exports.Hook = Hook
 let isCore
 if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
   isCore = Module.isBuiltin
+} else if (Module.builtinModules) { // Added in node v9.3.0, v8.10.0, v6.13.0
+  isCore = moduleName => {
+    if (moduleName.startsWith('node:')) {
+      return true
+    }
+
+    return Module.builtinModules.includes(moduleName)
+  }
 } else {
+  const _resolve = require('resolve')
   const [major, minor] = process.versions.node.split('.').map(Number)
   if (major === 8 && minor < 8) {
     // For node versions `[8.0, 8.8)` the "http2" module was built-in but
@@ -34,13 +43,13 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
       }
       // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
       // the latter is doing version range matches for every call.
-      return !!resolve.core[moduleName]
+      return !!_resolve.core[moduleName]
     }
   } else {
     isCore = moduleName => {
       // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
       // the latter is doing version range matches for every call.
-      return !!resolve.core[moduleName]
+      return !!_resolve.core[moduleName]
     }
   }
 }
