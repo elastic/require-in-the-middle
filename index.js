@@ -11,6 +11,8 @@ const moduleDetailsFromPath = require('module-details-from-path')
 module.exports = Hook
 module.exports.Hook = Hook
 
+let builtinModules // Set<string>
+
 /**
  * Is the given module a "core" module?
  * https://nodejs.org/api/modules.html#core-modules
@@ -26,7 +28,11 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
       return true
     }
 
-    return Module.builtinModules.includes(moduleName)
+    if (builtinModules === undefined) {
+      builtinModules = new Set(Module.builtinModules)
+    }
+
+    return builtinModules.has(moduleName)
   }
 } else {
   const _resolve = require('resolve')
