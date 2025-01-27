@@ -1,5 +1,11 @@
 # require-in-the-middle changelog
 
+## v7.5.0
+
+- Use Node.js core `require.resolve()`, rather than `require('resolve').sync()`, when available.
+  This can be a performance improvement.
+  (https://github.com/elastic/require-in-the-middle/pull/96)
+
 ## v7.4.0
 
 - Support hooking built-in Node.js loaded via
