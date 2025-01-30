@@ -2,7 +2,7 @@
 
 // Test support for triggering a reload/re-patch of a module by deleting it
 // from `require.cache`.
-// (https://github.com/elastic/require-in-the-middle/pull/63)
+// (https://github.com/nodejs/require-in-the-middle/pull/63)
 
 const test = require('tape')
 
