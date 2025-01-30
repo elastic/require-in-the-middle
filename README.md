@@ -4,7 +4,7 @@ Hook into the Node.js `require` function. This allows you to modify
 modules on-the-fly as they are being required.
 
 [![npm](https://img.shields.io/npm/v/require-in-the-middle.svg)](https://www.npmjs.com/package/require-in-the-middle)
-[![Test status](https://github.com/elastic/require-in-the-middle/workflows/Test/badge.svg)](https://github.com/elastic/require-in-the-middle/actions)
+[![Test status](https://github.com/nodejs/require-in-the-middle/workflows/Test/badge.svg)](https://github.com/nodejs/require-in-the-middle/actions)
 
 Also supports hooking into calls to `process.getBuiltinModule()`, which was introduced in Node.js v22.3.0.
 
@@ -77,4 +77,4 @@ subsequent calls to `require()` or `process.getBuiltinModule()`.
 
 ## License
 
-[MIT](https://github.com/elastic/require-in-the-middle/blob/master/LICENSE)
+[MIT](https://github.com/nodejs/require-in-the-middle/blob/master/LICENSE)
