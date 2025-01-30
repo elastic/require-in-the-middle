@@ -35,7 +35,7 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
     return builtinModules.has(moduleName)
   }
 } else {
-  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0, v8.10.0')
+  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0 or v8.10.0')
 }
 
 // Feature detection: This property was added in Node.js 8.9.0, the same time
@@ -47,7 +47,7 @@ if (require.resolve.paths) {
     return require.resolve(moduleName, { paths: [basedir] })
   }
 } else {
-  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0, v8.10.0')
+  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0 or v8.10.0')
 }
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
