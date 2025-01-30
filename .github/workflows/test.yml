@@ -20,15 +20,3 @@ jobs:
         node-version: ${{ matrix.node }}
     - run: npm install
     - run: npm test
-  test-expose-http2:
-    strategy:
-      matrix:
-        node: ['8.6']
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node }}
-    - run: npm install
-    - run: NODE_OPTIONS='--expose-http2' npm test
