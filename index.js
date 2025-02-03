@@ -64,7 +64,10 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
 // as the `paths` options argument was added to the `require.resolve` function,
 // which is the one we want
 let resolve
-if (require.resolve.paths) {
+// require.resolve might be undefined when using Node SEA mode:
+// https://nodejs.org/api/single-executable-applications.html
+// Also see https://github.com/nodejs/require-in-the-middle/issues/105
+if (require.resolve && require.resolve.paths) {
   resolve = function (moduleName, basedir) {
     return require.resolve(moduleName, { paths: [basedir] })
   }
