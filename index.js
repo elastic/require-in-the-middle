@@ -35,29 +35,7 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
     return builtinModules.has(moduleName)
   }
 } else {
-  const _resolve = require('resolve')
-  const [major, minor] = process.versions.node.split('.').map(Number)
-  if (major === 8 && minor < 8) {
-    // For node versions `[8.0, 8.8)` the "http2" module was built-in but
-    // behind the `--expose-http2` flag. `resolve` only considers unflagged
-    // modules to be core: https://github.com/browserify/resolve/issues/139
-    // However, for `ExportsCache` to work for "http2" we need it to be
-    // considered core.
-    isCore = moduleName => {
-      if (moduleName === 'http2') {
-        return true
-      }
-      // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
-      // the latter is doing version range matches for every call.
-      return !!_resolve.core[moduleName]
-    }
-  } else {
-    isCore = moduleName => {
-      // Prefer `resolve.core` lookup to `resolve.isCore(moduleName)` because
-      // the latter is doing version range matches for every call.
-      return !!_resolve.core[moduleName]
-    }
-  }
+  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0 or v8.10.0')
 }
 
 // Feature detection: This property was added in Node.js 8.9.0, the same time
@@ -72,10 +50,7 @@ if (require.resolve && require.resolve.paths) {
     return require.resolve(moduleName, { paths: [basedir] })
   }
 } else {
-  const _resolve = require('resolve')
-  resolve = function (moduleName, basedir) {
-    return _resolve.sync(moduleName, { basedir })
-  }
+  throw new Error('\'require-in-the-middle\' requires Node.js >= v9.3.0 or v8.10.0')
 }
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'

@@ -11,7 +11,7 @@ jobs:
   test-vers:
     strategy:
       matrix:
-        node: ['8.6', '8', '10.0', '10', '12.0', '12', '14.0', '14', '16.0', '16', '18.0', '18', '20', '22']
+        node: ['8.10', '10.0', '10', '12.0', '12', '14.0', '14', '16.0', '16', '18.0', '18', '20', '22']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -20,15 +20,3 @@ jobs:
         node-version: ${{ matrix.node }}
     - run: npm install
     - run: npm test
-  test-expose-http2:
-    strategy:
-      matrix:
-        node: ['8.6']
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node }}
-    - run: npm install
-    - run: NODE_OPTIONS='--expose-http2' npm test
