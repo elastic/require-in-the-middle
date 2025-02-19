@@ -60,22 +60,29 @@ if (Module.isBuiltin) { // Added in node v18.6.0, v16.17.0
   }
 }
 
-// Feature detection: This property was added in Node.js 8.9.0, the same time
-// as the `paths` options argument was added to the `require.resolve` function,
-// which is the one we want
-let resolve
-// require.resolve might be undefined when using Node SEA mode:
-// https://nodejs.org/api/single-executable-applications.html
-// Also see https://github.com/nodejs/require-in-the-middle/issues/105
-if (require.resolve && require.resolve.paths) {
-  resolve = function (moduleName, basedir) {
-    return require.resolve(moduleName, { paths: [basedir] })
+let _resolve
+
+function resolve (moduleName, basedir) {
+  // Feature detection: This property was added in Node.js 8.9.0, the same time
+  // as the `paths` options argument was added to the `require.resolve` function,
+  // which is the one we want
+  if (!_resolve) {
+    // require.resolve might be undefined when using Node SEA mode:
+    // https://nodejs.org/api/single-executable-applications.html
+    // Also see https://github.com/nodejs/require-in-the-middle/issues/105
+    if (require.resolve && require.resolve.paths) {
+      _resolve = function (moduleName, basedir) {
+        return require.resolve(moduleName, { paths: [basedir] })
+      }
+    } else {
+      const resolve = require('resolve')
+      _resolve = function (moduleName, basedir) {
+        return resolve.sync(moduleName, { basedir })
+      }
+    }
   }
-} else {
-  const _resolve = require('resolve')
-  resolve = function (moduleName, basedir) {
-    return _resolve.sync(moduleName, { basedir })
-  }
+
+  return _resolve(moduleName, basedir)
 }
 
 // 'foo/bar.js' or 'foo/bar/index.js' => 'foo/bar'
