@@ -1,6 +1,6 @@
 {
   "name": "require-in-the-middle",
-  "version": "7.5.1",
+  "version": "7.5.2",
   "description": "Module to hook into the Node.js require function",
   "main": "index.js",
   "types": "types/index.d.ts",
